@@ -1077,6 +1077,39 @@ function closeModal() {
     document.getElementById('modalOverlay').classList.remove('active');
 }
 
+// Yes/no confirmation using the same styled modal (replaces native confirm())
+function openConfirm(title, sub, confirmText, callback, danger) {
+    const overlay = document.getElementById('modalOverlay');
+    const content = document.getElementById('modalContent');
+
+    content.innerHTML = `
+        <h2>${escapeHtml(title)}</h2>
+        <p class="sub">${escapeHtml(sub)}</p>
+        <div class="btn-row">
+            <button class="btn btn-neutral" id="modalCancelBtn">Cancel</button>
+            <button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" id="modalConfirmBtn">${escapeHtml(confirmText)}</button>
+        </div>
+    `;
+
+    overlay.classList.add('active');
+
+    document.getElementById('modalCancelBtn').addEventListener('click', () => {
+        overlay.classList.remove('active');
+    });
+
+    document.getElementById('modalConfirmBtn').addEventListener('click', () => {
+        overlay.classList.remove('active');
+        if (callback) callback();
+    });
+}
+
+// Basic HTML escaping for anything interpolated into innerHTML
+function escapeHtml(str) {
+    return String(str ?? '').replace(/[&<>"']/g, ch => ({
+        '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;'
+    }[ch]));
+}
+
 // ============================================================
 // FAB
 // ============================================================
@@ -1244,14 +1277,21 @@ function createFolder(name) {
 }
 
 function deleteFolder(name) {
-    if (!confirm(`Delete folder "${name}"? Notes will be moved to "No folder".`)) return;
-    Object.values(data.notes).forEach(n => {
-        if (n.folder === name) n.folder = '';
-    });
-    delete data.folders[name];
-    saveData();
-    renderFolders();
-    showToast('Folder deleted');
+    openConfirm(
+        'Delete folder?',
+        `Delete folder "${name}"? Notes will be moved to "No folder".`,
+        'Delete',
+        function() {
+            Object.values(data.notes).forEach(n => {
+                if (n.folder === name) n.folder = '';
+            });
+            delete data.folders[name];
+            saveData();
+            renderFolders();
+            showToast('Folder deleted');
+        },
+        true
+    );
 }
 
 // ============================================================
@@ -1283,13 +1323,13 @@ function renderNotes() {
         
         return `
             <div class="note-card" data-id="${n.id}" style="border-left-color: ${n.folder && data.folders[n.folder] ? '#2ecc71' : '#5a8f75'};">
-                <div class="info" onclick="openNote('${n.id}')">
-                    <div class="title">${n.title || 'Untitled'}</div>
-                    <div class="preview">${preview || 'Empty note'}</div>
+                <div class="info" data-action="open" data-id="${n.id}">
+                    <div class="title">${escapeHtml(n.title) || 'Untitled'}</div>
+                    <div class="preview">${escapeHtml(preview) || 'Empty note'}</div>
                     <div class="meta">
-                        ${n.folder ? `<span class="folder-tag">${n.folder}</span>` : ''}
-                        ${tags.map(t => `<span class="tag">#${t}</span>`).join('')}
-                        ${extraTags ? `<span class="tag">+${extraTags}</span>` : ''}
+                        ${n.folder ? `<span class="folder-tag">${escapeHtml(n.folder)}</span>` : ''}
+                        ${tags.map(t => `<span class="tag">#${escapeHtml(t)}</span>`).join('')}
+                        ${extraTags ? `<span class="tag">+${escapeHtml(extraTags)}</span>` : ''}
                         <span class="date">${timeAgo}</span>
                     </div>
                 </div>
@@ -1309,6 +1349,11 @@ function renderNotes() {
     }).join('');
     
     // Attach event listeners
+    container.querySelectorAll('[data-action="open"]').forEach(el => {
+        el.addEventListener('click', function() {
+            openNote(this.dataset.id);
+        });
+    });
     container.querySelectorAll('[data-action="favorite"]').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -1370,8 +1415,8 @@ function renderFolders() {
     }
     container.innerHTML = names.map(f => `
         <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border-color);">
-            <span style="color:var(--text-primary);">${f}</span>
-            <button class="btn btn-sm btn-danger" data-action="deleteFolder" data-folder="${f}">✕</button>
+            <span style="color:var(--text-primary);">${escapeHtml(f)}</span>
+            <button class="btn btn-sm btn-danger" data-action="deleteFolder" data-folder="${escapeHtml(f)}">✕</button>
         </div>
     `).join('');
     
@@ -1476,11 +1521,27 @@ function initGoogleDrive() {
     }
 }
 
+// Returns true if the response was an auth failure (and resets connection state)
+function handleDriveAuthError(response) {
+    if (response.status === 401) {
+        saveGoogleToken('');
+        updateDriveButtons(false);
+        setDriveStatus('❌ Token expired. Reconnect.', 'disconnected');
+        showToast('Token expired.');
+        return true;
+    }
+    return false;
+}
+
 async function getOrCreateDriveFolder(token) {
     const searchRes = await fetch(
         "https://www.googleapis.com/drive/v3/files?q=name='CjayNotes' and mimeType='application/vnd.google-apps.folder' and trashed=false",
         { headers: { 'Authorization': 'Bearer ' + token } }
     );
+    if (!searchRes.ok) {
+        if (handleDriveAuthError(searchRes)) throw new Error('__auth_handled__');
+        throw new Error('Folder lookup failed (HTTP ' + searchRes.status + ')');
+    }
     const searchData = await searchRes.json();
     if (searchData.files && searchData.files.length > 0) return searchData.files[0].id;
     const createRes = await fetch('https://www.googleapis.com/drive/v3/files', {
@@ -1488,18 +1549,24 @@ async function getOrCreateDriveFolder(token) {
         headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: 'CjayNotes', mimeType: 'application/vnd.google-apps.folder' })
     });
+    if (!createRes.ok) {
+        if (handleDriveAuthError(createRes)) throw new Error('__auth_handled__');
+        throw new Error('Folder creation failed (HTTP ' + createRes.status + ')');
+    }
     const createData = await createRes.json();
     return createData.id;
 }
 
-async function deleteOldBackups(token, folderId) {
+async function deleteOldBackups(token, folderId, excludeId) {
     const searchRes = await fetch(
         `https://www.googleapis.com/drive/v3/files?q=name='cjaynotes_backup.json' and '${folderId}' in parents and trashed=false`,
         { headers: { 'Authorization': 'Bearer ' + token } }
     );
+    if (!searchRes.ok) return; // non-critical cleanup step; new backup is already safely uploaded
     const searchData = await searchRes.json();
     if (searchData.files) {
         for (const file of searchData.files) {
+            if (file.id === excludeId) continue;
             await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': 'Bearer ' + token }
@@ -1516,7 +1583,6 @@ async function pushToDrive() {
     setDriveStatus('📤 Pushing...', 'pending');
     try {
         const folderId = await getOrCreateDriveFolder(token);
-        await deleteOldBackups(token, folderId);
         const backupData = { 
             data: data, 
             theme: getStoredTheme(),
@@ -1534,14 +1600,18 @@ async function pushToDrive() {
             body: form
         });
         if (!response.ok) {
-            if (response.status === 401) { saveGoogleToken(''); updateDriveButtons(false); setDriveStatus('❌ Token expired. Reconnect.', 'disconnected'); showToast('Token expired.'); return; }
+            if (handleDriveAuthError(response)) return;
             throw new Error('Upload failed (HTTP ' + response.status + ')');
         }
+        // New backup is safely uploaded before we clean up older duplicate copies
+        const newFile = await response.json();
+        await deleteOldBackups(token, folderId, newFile.id);
         setLastSyncTime();
         setDriveStatus('✅ Push successful! ' + noteCount + ' notes backed up.', 'connected');
         showToast('Notes pushed to Drive!');
         updateSyncInfo();
     } catch (err) {
+        if (err.message === '__auth_handled__') return;
         console.error('Push error:', err);
         setDriveStatus('❌ Push failed: ' + err.message, 'disconnected');
         showToast('Push failed.');
@@ -1569,26 +1639,36 @@ async function pullFromDrive() {
         const downloadRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
             headers: { 'Authorization': 'Bearer ' + token }
         });
-        if (!downloadRes.ok) throw new Error('Download failed (HTTP ' + downloadRes.status + ')');
+        if (!downloadRes.ok) {
+            if (handleDriveAuthError(downloadRes)) return;
+            throw new Error('Download failed (HTTP ' + downloadRes.status + ')');
+        }
         const jsonString = await downloadRes.text();
         const backupData = JSON.parse(jsonString);
         if (!backupData.data || !backupData.data.notes) throw new Error('Invalid backup format.');
         const noteCount = Object.keys(backupData.data.notes).length;
-        if (!confirm(`Replace all current notes with Drive backup?\n\nBackup contains:\n• ${noteCount} notes\n• ${Object.keys(backupData.data.folders || {}).length} folders\n• Last modified: ${new Date(fileModified).toLocaleString()}\n\nContinue?`)) {
-            setDriveStatus('Pull cancelled.', '');
-            return;
-        }
-        data = backupData.data;
-        if (backupData.theme) applyTheme(backupData.theme);
-        saveData();
-        renderNotes();
-        renderFolders();
-        updateStats();
-        setLastSyncTime();
-        setDriveStatus('✅ Pull successful! Imported ' + noteCount + ' notes.', 'connected');
-        showToast('✅ Imported ' + noteCount + ' notes from Drive!');
-        updateSyncInfo();
+        const folderCount = Object.keys(backupData.data.folders || {}).length;
+        setDriveStatus('Awaiting confirmation...', 'pending');
+        openConfirm(
+            'Replace all notes?',
+            `Drive backup contains ${noteCount} notes and ${folderCount} folders, last modified ${new Date(fileModified).toLocaleString()}. This will replace everything currently in the app.`,
+            'Restore',
+            function() {
+                data = backupData.data;
+                if (backupData.theme) applyTheme(backupData.theme);
+                saveData();
+                renderNotes();
+                renderFolders();
+                updateStats();
+                setLastSyncTime();
+                setDriveStatus('✅ Pull successful! Imported ' + noteCount + ' notes.', 'connected');
+                showToast('✅ Imported ' + noteCount + ' notes from Drive!');
+                updateSyncInfo();
+            },
+            true
+        );
     } catch (err) {
+        if (err.message === '__auth_handled__') return;
         console.error('Pull error:', err);
         setDriveStatus('❌ Pull failed: ' + err.message, 'disconnected');
         showToast('Pull failed.');
@@ -1629,14 +1709,22 @@ document.getElementById('backupInput').addEventListener('change', function(e) {
             const backupData = JSON.parse(event.target.result);
             if (!backupData.data || !backupData.data.notes) { showToast('Invalid backup file!'); return; }
             const noteCount = Object.keys(backupData.data.notes).length;
-            if (!confirm(`Replace all current notes with backup?\n\nBackup contains:\n• ${noteCount} notes\n• ${Object.keys(backupData.data.folders || {}).length} folders\n\nContinue?`)) return;
-            data = backupData.data;
-            if (backupData.theme) applyTheme(backupData.theme);
-            saveData();
-            renderNotes();
-            renderFolders();
-            updateStats();
-            showToast(`✅ Restored ${noteCount} notes from backup!`);
+            const folderCount = Object.keys(backupData.data.folders || {}).length;
+            openConfirm(
+                'Replace all notes?',
+                `Backup contains ${noteCount} notes and ${folderCount} folders. This will replace everything currently in the app.`,
+                'Restore',
+                function() {
+                    data = backupData.data;
+                    if (backupData.theme) applyTheme(backupData.theme);
+                    saveData();
+                    renderNotes();
+                    renderFolders();
+                    updateStats();
+                    showToast(`✅ Restored ${noteCount} notes from backup!`);
+                },
+                true
+            );
         } catch (err) {
             showToast('❌ Error: Invalid backup file');
             console.error(err);
@@ -1650,13 +1738,20 @@ document.getElementById('backupInput').addEventListener('change', function(e) {
 // RESET ALL DATA
 // ============================================================
 function resetAllData() {
-    if (!confirm('Delete ALL notes and folders?')) return;
-    data = getDefaultData();
-    saveData();
-    renderNotes();
-    renderFolders();
-    updateStats();
-    showToast('All data cleared.');
+    openConfirm(
+        'Reset all data?',
+        'Delete ALL notes and folders? This cannot be undone.',
+        'Delete everything',
+        function() {
+            data = getDefaultData();
+            saveData();
+            renderNotes();
+            renderFolders();
+            updateStats();
+            showToast('All data cleared.');
+        },
+        true
+    );
 }
 
 // ============================================================
