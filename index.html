@@ -1818,7 +1818,22 @@ function bindEvents() {
         });
     });
 }
-
+// Save when tapping outside the editor
+document.addEventListener('click', function(e) {
+    if (document.getElementById('screen-editor').classList.contains('active')) {
+        const editor = document.querySelector('.editor-container');
+        const backBtn = document.getElementById('backFromEditorBtn');
+        const saveBtn = document.getElementById('saveNoteBtn');
+        
+        // Check if click is outside the editor and not on the back/save buttons
+        if (editor && !editor.contains(e.target) && 
+            e.target !== backBtn && !backBtn.contains(e.target) &&
+            e.target !== saveBtn && !saveBtn.contains(e.target)) {
+            saveCurrentNote();
+            showToast('Note saved!');
+        }
+    }
+});
 // ============================================================
 // BOOT
 // ============================================================
