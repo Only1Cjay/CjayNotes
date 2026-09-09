@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -46,6 +45,7 @@
             --card-shadow: 0 4px 16px rgba(0,0,0,0.3);
             --card-shadow-hover: 0 6px 24px rgba(0,0,0,0.4);
             --transition-speed: 0.2s;
+            --radius: 14px;
         }
 
         [data-theme="light"] {
@@ -90,11 +90,29 @@
 
         .hidden { display: none !important; }
         
+        /* ===== SVG ICONS ===== */
+        .icon-svg {
+            width: 18px;
+            height: 18px;
+            fill: none;
+            stroke: currentColor;
+            stroke-width: 2;
+            stroke-linecap: round;
+            stroke-linejoin: round;
+            flex-shrink: 0;
+        }
+        .icon-svg.sm { width: 14px; height: 14px; stroke-width: 2; }
+        .icon-svg.lg { width: 24px; height: 24px; stroke-width: 2; }
+        .icon-svg.accent { stroke: var(--accent); }
+        .icon-svg.danger { stroke: var(--danger); }
+        .icon-svg.muted { stroke: var(--text-muted); }
+
+        /* ===== TOP BAR ===== */
         .top-bar {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 16px;
+            margin-bottom: 20px;
         }
         .top-bar h1 {
             font-family: var(--font-header);
@@ -107,29 +125,30 @@
         .top-bar .right-group {
             display: flex;
             align-items: center;
-            gap: 4px;
+            gap: 6px;
         }
         .top-bar .icon-btn {
             background: var(--bg-secondary);
             border: none;
             border-radius: 50%;
-            width: 34px;
-            height: 34px;
+            width: 36px;
+            height: 36px;
             display: flex;
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            font-size: 15px;
             color: var(--text-secondary);
             transition: var(--transition-speed);
             touch-action: manipulation;
+            padding: 0;
         }
         .top-bar .icon-btn:active { transform: scale(0.9); background: var(--accent); color: var(--bg-primary); }
+        .top-bar .icon-btn .icon-svg { stroke: currentColor; }
 
         .btn {
             padding: 10px 20px;
             border: none;
-            border-radius: 10px;
+            border-radius: var(--radius);
             font-weight: 600;
             font-size: 14px;
             font-family: var(--font-body);
@@ -139,6 +158,10 @@
             color: var(--btn-neutral-text);
             touch-action: manipulation;
             min-height: 44px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
         }
         .btn:active { transform: scale(0.96); }
         .btn-primary {
@@ -160,10 +183,10 @@
         /* ===== STATS BAR ===== */
         .stats-bar {
             display: flex;
-            gap: 16px;
+            gap: 20px;
             background: var(--bg-card);
-            border-radius: 12px;
-            padding: 10px 16px;
+            border-radius: var(--radius);
+            padding: 12px 18px;
             margin-bottom: 16px;
             box-shadow: var(--card-shadow);
             transition: all var(--transition-speed);
@@ -173,17 +196,79 @@
             display: flex;
             align-items: center;
             gap: 6px;
-            font-size: 12px;
+            font-size: 13px;
             color: var(--text-secondary);
             font-weight: 500;
         }
-        .stats-bar .stat .num { font-weight: 700; color: var(--text-primary); font-size: 14px; }
+        .stats-bar .stat .icon-svg { stroke: var(--text-muted); width: 16px; height: 16px; }
+        .stats-bar .stat .num { font-weight: 700; color: var(--text-primary); font-size: 15px; }
+
+        /* ===== FILTER BAR ===== */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 14px;
+        }
+        .filter-bar .filter-btn {
+            padding: 6px 16px;
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition-speed);
+            font-family: var(--font-body);
+            touch-action: manipulation;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .filter-bar .filter-btn:active { transform: scale(0.95); }
+        .filter-bar .filter-btn.active {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border-color: var(--accent);
+        }
+        .filter-bar .filter-btn .count {
+            opacity: 0.6;
+            font-size: 10px;
+        }
+        .filter-bar .filter-btn .icon-svg { width: 14px; height: 14px; }
+
+        /* ===== SEARCH BAR ===== */
+        .search-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 14px;
+        }
+        .search-bar input {
+            flex: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: var(--radius);
+            padding: 10px 16px;
+            font-family: var(--font-body);
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+            transition: var(--transition-speed);
+            min-height: 44px;
+        }
+        .search-bar input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-light);
+        }
+        .search-bar input::placeholder { color: var(--text-muted); }
+        .search-bar .btn { padding: 10px 14px; }
 
         /* ===== NOTE LIST ===== */
         .note-grid { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
         .note-card {
             background: var(--bg-card);
-            border-radius: 14px;
+            border-radius: var(--radius);
             padding: 14px 18px;
             display: flex;
             justify-content: space-between;
@@ -195,10 +280,7 @@
             cursor: pointer;
         }
         .note-card:active { transform: scale(0.98); }
-        .note-card .info {
-            flex: 1;
-            min-width: 0;
-        }
+        .note-card .info { flex: 1; min-width: 0; }
         .note-card .info .title {
             font-family: var(--font-header);
             font-weight: 700;
@@ -221,6 +303,7 @@
             gap: 8px;
             margin-top: 4px;
             flex-wrap: wrap;
+            align-items: center;
         }
         .note-card .info .meta .tag {
             font-size: 10px;
@@ -243,7 +326,7 @@
         }
         .note-card .actions {
             display: flex;
-            gap: 6px;
+            gap: 4px;
             flex-shrink: 0;
             margin-left: 10px;
         }
@@ -257,19 +340,21 @@
             align-items: center;
             justify-content: center;
             cursor: pointer;
-            font-size: 13px;
             color: var(--text-secondary);
             transition: var(--transition-speed);
             touch-action: manipulation;
+            padding: 0;
         }
         .note-card .actions .icon-btn-sm:active { transform: scale(0.9); background: var(--accent); color: var(--bg-primary); }
         .note-card .actions .icon-btn-sm.danger:active { background: var(--danger); color: #fff; }
-        .note-card .actions .icon-btn-sm .star { color: var(--warning); }
+        .note-card .actions .icon-btn-sm .icon-svg { width: 14px; height: 14px; stroke: currentColor; }
+        .note-card .actions .icon-btn-sm .icon-svg.star-filled { fill: var(--warning); stroke: var(--warning); }
+        .note-card .actions .icon-btn-sm .icon-svg.star-empty { stroke: var(--text-muted); }
 
         /* ===== NOTE EDITOR ===== */
         .editor-container {
             background: var(--bg-card);
-            border-radius: 18px;
+            border-radius: var(--radius);
             padding: 20px;
             box-shadow: var(--card-shadow);
             transition: all var(--transition-speed);
@@ -302,7 +387,7 @@
         .editor-container textarea::placeholder { color: var(--text-muted); }
         .editor-container .editor-meta {
             display: flex;
-            gap: 12px;
+            gap: 14px;
             flex-wrap: wrap;
             margin-top: 12px;
             padding-top: 12px;
@@ -340,66 +425,10 @@
         .editor-container .editor-meta .field input { min-width: 120px; }
         .editor-container .editor-meta .field select { min-width: 100px; }
 
-        /* ===== FILTER BAR ===== */
-        .filter-bar {
-            display: flex;
-            gap: 8px;
-            flex-wrap: wrap;
-            margin-bottom: 12px;
-        }
-        .filter-bar .filter-btn {
-            padding: 6px 14px;
-            border: 1px solid var(--border-color);
-            border-radius: 999px;
-            background: transparent;
-            color: var(--text-secondary);
-            font-size: 12px;
-            font-weight: 500;
-            cursor: pointer;
-            transition: var(--transition-speed);
-            font-family: var(--font-body);
-            touch-action: manipulation;
-        }
-        .filter-bar .filter-btn:active { transform: scale(0.95); }
-        .filter-bar .filter-btn.active {
-            background: var(--accent);
-            color: var(--bg-primary);
-            border-color: var(--accent);
-        }
-        .filter-bar .filter-btn .count {
-            opacity: 0.6;
-            font-size: 10px;
-        }
-
-        /* ===== SEARCH ===== */
-        .search-bar {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 12px;
-        }
-        .search-bar input {
-            flex: 1;
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            padding: 10px 16px;
-            font-family: var(--font-body);
-            font-size: 14px;
-            color: var(--text-primary);
-            outline: none;
-            transition: var(--transition-speed);
-            min-height: 44px;
-        }
-        .search-bar input:focus {
-            border-color: var(--accent);
-            box-shadow: 0 0 0 2px var(--accent-light);
-        }
-        .search-bar input::placeholder { color: var(--text-muted); }
-
         /* ===== SETTINGS ===== */
         .settings-group {
             background: var(--bg-card);
-            border-radius: 14px;
+            border-radius: var(--radius);
             padding: 16px;
             margin: 12px 0;
             box-shadow: var(--card-shadow);
@@ -448,7 +477,7 @@
         .settings-group input {
             width: 100%;
             padding: 10px 14px;
-            border-radius: 10px;
+            border-radius: var(--radius);
             border: 1px solid var(--border-color);
             background: var(--bg-input);
             color: var(--text-primary);
@@ -464,7 +493,7 @@
         .drive-status.pending { background: var(--warning); color: #000; }
         .sync-info { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-weight: 500; }
 
-        /* ===== MODAL ===== */
+        /* ===== CUSTOM MODAL ===== */
         .modal-overlay {
             position: fixed;
             top: 0; left: 0;
@@ -476,14 +505,13 @@
             align-items: center;
             z-index: 999;
             padding: 20px;
-            transition: background var(--transition-speed);
         }
         .modal-overlay.active { display: flex; }
         .modal {
             background: var(--modal-bg);
             border-radius: 20px;
             padding: 28px 24px;
-            max-width: 440px;
+            max-width: 400px;
             width: 100%;
             max-height: 90vh;
             overflow-y: auto;
@@ -494,28 +522,88 @@
             from { transform: translateY(30px); opacity: 0; }
             to { transform: translateY(0); opacity: 1; }
         }
-        .modal h2 { font-family: var(--font-header); font-weight: 700; font-size: 20px; color: var(--text-primary); margin-bottom: 6px; }
-        .modal .sub { color: var(--text-secondary); font-size: 14px; margin-bottom: 16px; font-weight: 500; }
-        .modal label { display: block; font-size: 13px; color: var(--text-secondary); margin: 12px 0 4px; font-weight: 500; }
-        .modal input, .modal textarea, .modal select {
+        .modal h2 {
+            font-family: var(--font-header);
+            font-weight: 700;
+            font-size: 20px;
+            color: var(--text-primary);
+            margin-bottom: 6px;
+        }
+        .modal .sub {
+            color: var(--text-secondary);
+            font-size: 14px;
+            margin-bottom: 16px;
+            font-weight: 500;
+        }
+        .modal label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 12px 0 4px;
+            font-weight: 500;
+        }
+        .modal input {
             width: 100%;
             padding: 12px 14px;
-            border-radius: 10px;
+            border-radius: var(--radius);
             border: 1px solid var(--border-color);
             background: var(--bg-input);
             color: var(--text-primary);
             font-size: 15px;
             font-family: var(--font-body);
-            resize: vertical;
+            outline: none;
             transition: all var(--transition-speed);
         }
-        .modal input:focus, .modal textarea:focus, .modal select:focus {
+        .modal input:focus {
             outline: 2px solid var(--accent);
             border-color: transparent;
         }
-        .modal .btn-row { display: flex; gap: 10px; margin-top: 18px; }
+        .modal .btn-row {
+            display: flex;
+            gap: 10px;
+            margin-top: 18px;
+        }
         .modal .btn-row .btn { flex: 1; text-align: center; }
 
+        /* ===== UNDO TOAST ===== */
+        .undo-toast {
+            position: fixed;
+            left: 50%;
+            bottom: 100px;
+            transform: translateX(-50%) translateY(20px);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            padding: 12px 20px;
+            border-radius: 999px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            font-size: 13px;
+            font-weight: 500;
+            box-shadow: var(--card-shadow-hover);
+            border: 1px solid var(--border-color);
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s, transform 0.2s;
+            z-index: 50;
+            max-width: 90%;
+        }
+        .undo-toast.show {
+            opacity: 1;
+            transform: translateX(-50%) translateY(0);
+            pointer-events: auto;
+        }
+        .undo-toast button {
+            background: none;
+            border: none;
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 13px;
+            cursor: pointer;
+            font-family: var(--font-body);
+        }
+
+        /* ===== FAB ===== */
         .fab-container {
             position: fixed;
             bottom: 24px;
@@ -542,13 +630,14 @@
             align-items: center;
             justify-content: center;
             touch-action: manipulation;
+            padding: 0;
         }
         .fab:active { transform: scale(0.9); }
         .fab.open { transform: rotate(45deg); background: var(--danger); color: #fff; }
 
         .fab-menu {
             background: var(--bg-card);
-            border-radius: 14px;
+            border-radius: var(--radius);
             padding: 8px 0;
             min-width: 200px;
             box-shadow: var(--card-shadow-hover);
@@ -580,12 +669,12 @@
             touch-action: manipulation;
         }
         .fab-menu-item:active { background: var(--bg-secondary); }
-        .fab-menu-item .icon { font-size: 18px; width: 24px; text-align: center; color: var(--text-secondary); }
+        .fab-menu-item .icon-svg { stroke: var(--text-secondary); width: 18px; height: 18px; }
         .fab-menu-item .label { flex: 1; text-align: left; }
         .fab-menu-divider { border: none; border-top: 1px solid var(--border-color); margin: 4px 12px; }
 
         .empty-state { text-align: center; padding: 40px 0; color: var(--text-muted); }
-        .empty-state .big-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.3; }
+        .empty-state .icon-svg { stroke: var(--text-muted); width: 48px; height: 48px; margin-bottom: 12px; opacity: 0.3; }
         .text-muted { color: var(--text-muted); font-size: 13px; font-weight: 500; }
         .text-center { text-align: center; }
         .mt-12 { margin-top: 12px; }
@@ -617,8 +706,8 @@
         .hidden-file-input { display: none; }
 
         @media (max-width: 400px) {
-            .stats-bar { gap: 10px; }
-            .stats-bar .stat { font-size: 11px; }
+            .stats-bar { gap: 12px; }
+            .stats-bar .stat { font-size: 12px; }
             .note-card { flex-wrap: wrap; }
             .note-card .actions { margin-left: 0; margin-top: 6px; }
             .editor-container .editor-meta { flex-direction: column; }
@@ -628,40 +717,78 @@
 </head>
 <body>
 
+<!-- ===== TOAST ===== -->
 <div class="toast" id="toast"></div>
+
+<!-- ===== UNDO TOAST ===== -->
+<div class="undo-toast" id="undoToast">
+    <span id="undoText">Note deleted</span>
+    <button id="undoBtn">Undo</button>
+</div>
 
 <!-- ===== TOP BAR ===== -->
 <div class="top-bar">
     <h1>Cjay<span>Notes</span></h1>
     <div class="right-group">
-        <button class="icon-btn" id="searchToggle" aria-label="Toggle search">🔍</button>
-        <button class="icon-btn" id="themeBtn" aria-label="Toggle theme">🌙</button>
-        <button class="icon-btn" id="homeBtn" aria-label="Home">🏠</button>
-        <button class="icon-btn" id="settingsBtn" aria-label="Settings">⚙️</button>
+        <button class="icon-btn" id="searchToggle" aria-label="Search">
+            <svg class="icon-svg" viewBox="0 0 24 24"><circle cx="11" cy="11" r="8"/><line x1="21" y1="21" x2="16.65" y2="16.65"/></svg>
+        </button>
+        <button class="icon-btn" id="themeBtn" aria-label="Toggle theme">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>
+        </button>
+        <button class="icon-btn" id="homeBtn" aria-label="Home">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-4 0a1 1 0 01-1-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 01-1 1"/></svg>
+        </button>
+        <button class="icon-btn" id="settingsBtn" aria-label="Settings">
+            <svg class="icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 1v2"/><path d="M12 21v2"/><path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/><path d="M1 12h2"/><path d="M21 12h2"/><path d="M4.22 19.78l1.42-1.42"/><path d="M18.36 5.64l1.42-1.42"/></svg>
+        </button>
     </div>
 </div>
 
 <!-- ===== SCREEN: HOME ===== -->
 <div id="screen-home" class="screen active">
-    <!-- Search Bar (toggleable) -->
+    <!-- Search Bar -->
     <div class="search-bar hidden" id="searchBar">
         <input type="text" id="searchInput" placeholder="Search notes, tags, or folders...">
-        <button class="btn btn-sm btn-primary" id="clearSearchBtn">✕</button>
+        <button class="btn btn-sm btn-primary" id="clearSearchBtn">
+            <svg class="icon-svg sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
+        </button>
     </div>
 
     <!-- Filter Bar -->
     <div class="filter-bar" id="filterBar">
-        <button class="filter-btn active" data-filter="all">All <span class="count" id="countAll">0</span></button>
-        <button class="filter-btn" data-filter="favorites">⭐ Favorites <span class="count" id="countFavorites">0</span></button>
-        <button class="filter-btn" data-filter="archived">📦 Archived <span class="count" id="countArchived">0</span></button>
+        <button class="filter-btn active" data-filter="all">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
+            All <span class="count" id="countAll">0</span>
+        </button>
+        <button class="filter-btn" data-filter="favorites">
+            <svg class="icon-svg" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+            Favorites <span class="count" id="countFavorites">0</span>
+        </button>
+        <button class="filter-btn" data-filter="archived">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+            Archived <span class="count" id="countArchived">0</span>
+        </button>
     </div>
 
     <!-- Stats Bar -->
     <div class="stats-bar">
-        <div class="stat">📝 <span class="num" id="statNotes">0</span> notes</div>
-        <div class="stat">🏷️ <span class="num" id="statTags">0</span> tags</div>
-        <div class="stat">📁 <span class="num" id="statFolders">0</span> folders</div>
-        <div class="stat" id="syncStatusStat">☁️ <span class="num" id="syncStatusText">Not synced</span></div>
+        <div class="stat">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="12" y2="12"/></svg>
+            <span class="num" id="statNotes">0</span> notes
+        </div>
+        <div class="stat">
+            <svg class="icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
+            <span class="num" id="statTags">0</span> tags
+        </div>
+        <div class="stat">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+            <span class="num" id="statFolders">0</span> folders
+        </div>
+        <div class="stat">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg>
+            <span class="num" id="syncStatusText">Not synced</span>
+        </div>
     </div>
 
     <!-- Note List -->
@@ -672,16 +799,17 @@
 <div id="screen-editor" class="screen">
     <div class="flex-between mb-8">
         <button class="btn btn-outline btn-sm" id="backFromEditorBtn">← Back</button>
-        <div style="display:flex; gap:6px;">
-            <button class="btn btn-sm btn-neutral" id="saveNoteBtn">💾 Save</button>
-        </div>
+        <button class="btn btn-sm btn-neutral" id="saveNoteBtn">
+            <svg class="icon-svg sm" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            Save
+        </button>
     </div>
     <div class="editor-container">
         <input type="text" id="noteTitle" placeholder="Note title...">
         <textarea id="noteContent" placeholder="Start writing your note..."></textarea>
         <div class="editor-meta">
             <div class="field">
-                <label>Tags (comma-separated)</label>
+                <label>Tags</label>
                 <input type="text" id="noteTags" placeholder="work, personal, ideas">
             </div>
             <div class="field">
@@ -702,10 +830,9 @@
 <div id="screen-settings" class="screen">
     <h2 style="font-family:var(--font-header); font-weight:700; font-size:20px; color:var(--text-primary); margin-bottom:16px;">Settings</h2>
 
-    <!-- Folders -->
     <div class="settings-group">
         <div class="group-header" data-group="folders">
-            <h3>📁 Folders</h3>
+            <h3>Folders</h3>
             <span class="toggle-icon">▼</span>
         </div>
         <div class="group-content">
@@ -718,10 +845,9 @@
         </div>
     </div>
 
-    <!-- Google Drive Sync -->
     <div class="settings-group">
         <div class="group-header" data-group="drive">
-            <h3>☁️ Google Drive Sync</h3>
+            <h3>Google Drive Sync</h3>
             <span class="toggle-icon">▼</span>
         </div>
         <div class="group-content">
@@ -729,34 +855,33 @@
             <label>Google Client ID</label>
             <input type="text" id="googleClientId" placeholder="Paste your Google Client ID here...">
             <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
-                <button class="btn btn-primary btn-sm" id="connectDriveBtn">🔗 Connect</button>
-                <button class="btn btn-success btn-sm" id="pushDriveBtn" disabled>📤 Push</button>
-                <button class="btn btn-neutral btn-sm" id="pullDriveBtn" disabled>📥 Pull</button>
+                <button class="btn btn-primary btn-sm" id="connectDriveBtn">Connect</button>
+                <button class="btn btn-success btn-sm" id="pushDriveBtn" disabled>Push</button>
+                <button class="btn btn-neutral btn-sm" id="pullDriveBtn" disabled>Pull</button>
             </div>
             <div id="driveStatus" style="margin-top:8px;"></div>
             <div id="syncInfo" class="sync-info"></div>
         </div>
     </div>
 
-    <!-- Backup & Restore -->
     <div class="settings-group">
         <div class="group-header" data-group="backup">
-            <h3>💾 Backup & Restore</h3>
+            <h3>Backup & Restore</h3>
             <span class="toggle-icon">▼</span>
         </div>
         <div class="group-content">
             <p class="text-muted" style="margin-bottom:8px;">Export your notes as a JSON file or import a backup.</p>
             <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                <button class="btn btn-success btn-sm" id="exportBackupBtn">📤 Export</button>
-                <button class="btn btn-neutral btn-sm" id="importBackupBtn">📂 Import</button>
+                <button class="btn btn-success btn-sm" id="exportBackupBtn">Export</button>
+                <button class="btn btn-neutral btn-sm" id="importBackupBtn">Import</button>
             </div>
         </div>
     </div>
 
-    <button class="btn btn-danger btn-block" id="resetAllBtn">🗑️ Reset All Data</button>
+    <button class="btn btn-danger btn-block" id="resetAllBtn">Reset All Data</button>
 </div>
 
-<!-- ===== MODAL ===== -->
+<!-- ===== CUSTOM MODAL ===== -->
 <div class="modal-overlay" id="modalOverlay">
     <div class="modal" id="modalContent"></div>
 </div>
@@ -764,13 +889,27 @@
 <!-- ===== FAB ===== -->
 <div class="fab-container">
     <div class="fab-menu" id="fabMenu">
-        <button class="fab-menu-item" id="fabNewNote"><span class="icon">➕</span><span class="label">New Note</span></button>
-        <button class="fab-menu-item" id="fabNewFolder"><span class="icon">📁</span><span class="label">New Folder</span></button>
+        <button class="fab-menu-item" id="fabNewNote">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 5v14"/><path d="M5 12h14"/></svg>
+            <span class="label">New Note</span>
+        </button>
+        <button class="fab-menu-item" id="fabNewFolder">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/><path d="M12 11v6"/><path d="M9 14h6"/></svg>
+            <span class="label">New Folder</span>
+        </button>
         <hr class="fab-menu-divider">
-        <button class="fab-menu-item" id="fabPushDrive"><span class="icon">☁️</span><span class="label">Push to Drive</span></button>
-        <button class="fab-menu-item" id="fabPullDrive"><span class="icon">☁️</span><span class="label">Pull from Drive</span></button>
+        <button class="fab-menu-item" id="fabPushDrive">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2v12"/><path d="M9 11l3 3 3-3"/><path d="M4 16v2a2 2 0 002 2h12a2 2 0 002-2v-2"/></svg>
+            <span class="label">Push to Drive</span>
+        </button>
+        <button class="fab-menu-item" id="fabPullDrive">
+            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 22V10"/><path d="M9 13l3-3 3 3"/><path d="M4 8v6a2 2 0 002 2h12a2 2 0 002-2V8"/></svg>
+            <span class="label">Pull from Drive</span>
+        </button>
     </div>
-    <button class="fab" id="fabButton">+</button>
+    <button class="fab" id="fabButton">
+        <svg class="icon-svg lg" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    </button>
 </div>
 
 <input type="file" id="backupInput" class="hidden-file-input" accept=".json">
@@ -794,6 +933,7 @@ let currentFilter = 'all';
 let searchQuery = '';
 let tokenClient = null;
 let saveTimeout = null;
+let pendingDelete = null;
 
 function loadData() {
     try {
@@ -821,7 +961,6 @@ function generateId() { return Date.now().toString(36) + Math.random().toString(
 
 function getNotesArray() {
     const notes = Object.values(data.notes);
-    // Sort by updatedAt (newest first)
     return notes.sort((a, b) => {
         const da = new Date(a.updatedAt || a.createdAt);
         const db = new Date(b.updatedAt || b.createdAt);
@@ -838,9 +977,6 @@ function getFilteredNotes() {
         notes = notes.filter(n => n.archived);
     } else {
         notes = notes.filter(n => !n.archived);
-        if (currentFilter === 'all') {
-            // Show all non-archived
-        }
     }
     
     if (searchQuery) {
@@ -867,7 +1003,12 @@ function getStoredTheme() {
 function applyTheme(theme) {
     document.documentElement.setAttribute('data-theme', theme);
     localStorage.setItem('cjaynotes_theme', theme);
-    document.getElementById('themeBtn').textContent = theme === 'dark' ? '🌙' : '☀️';
+    const btn = document.getElementById('themeBtn');
+    if (btn) {
+        btn.innerHTML = theme === 'dark'
+            ? '<svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>'
+            : '<svg class="icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2"/><path d="M12 21v2"/><path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/><path d="M1 12h2"/><path d="M21 12h2"/><path d="M4.22 19.78l1.42-1.42"/><path d="M18.36 5.64l1.42-1.42"/></svg>';
+    }
 }
 
 function toggleTheme() {
@@ -891,18 +1032,49 @@ function showToast(msg) {
 }
 
 // ============================================================
-// COLLAPSIBLE GROUPS
+// CUSTOM MODAL
 // ============================================================
-function toggleGroup(header) {
-    const content = header.nextElementSibling;
-    const icon = header.querySelector('.toggle-icon');
-    if (content.classList.contains('open')) {
-        content.classList.remove('open');
-        icon.classList.remove('open');
-    } else {
-        content.classList.add('open');
-        icon.classList.add('open');
-    }
+function openModal(title, sub, inputPlaceholder, confirmText, callback) {
+    const overlay = document.getElementById('modalOverlay');
+    const content = document.getElementById('modalContent');
+    
+    content.innerHTML = `
+        <h2>${title}</h2>
+        <p class="sub">${sub}</p>
+        <label>Name</label>
+        <input id="modalInput" placeholder="${inputPlaceholder}" autofocus>
+        <div class="btn-row">
+            <button class="btn btn-neutral" id="modalCancelBtn">Cancel</button>
+            <button class="btn btn-primary" id="modalConfirmBtn">${confirmText}</button>
+        </div>
+    `;
+    
+    overlay.classList.add('active');
+    
+    setTimeout(() => {
+        const input = document.getElementById('modalInput');
+        if (input) input.focus();
+    }, 100);
+    
+    document.getElementById('modalCancelBtn').addEventListener('click', () => {
+        overlay.classList.remove('active');
+    });
+    
+    document.getElementById('modalConfirmBtn').addEventListener('click', () => {
+        const value = document.getElementById('modalInput').value.trim();
+        overlay.classList.remove('active');
+        if (value && callback) callback(value);
+    });
+    
+    document.getElementById('modalInput').addEventListener('keydown', (e) => {
+        if (e.key === 'Enter') {
+            document.getElementById('modalConfirmBtn').click();
+        }
+    });
+}
+
+function closeModal() {
+    document.getElementById('modalOverlay').classList.remove('active');
 }
 
 // ============================================================
@@ -930,7 +1102,7 @@ function createNote(title = '', content = '') {
     const now = new Date().toISOString();
     data.notes[id] = {
         id: id,
-        title: title,
+        title: title || 'Untitled',
         content: content,
         tags: [],
         folder: '',
@@ -944,14 +1116,47 @@ function createNote(title = '', content = '') {
 }
 
 function deleteNote(id) {
-    if (!confirm('Delete this note?')) return;
+    const note = data.notes[id];
+    if (!note) return;
+    
+    // Store for undo
+    pendingDelete = { note, id };
+    
+    // Remove from data
     delete data.notes[id];
     saveData();
+    
+    // Show undo toast
+    const toast = document.getElementById('undoToast');
+    document.getElementById('undoText').textContent = 'Note deleted';
+    toast.classList.add('show');
+    
+    // Auto-hide after 5 seconds
+    if (pendingDelete.timer) clearTimeout(pendingDelete.timer);
+    pendingDelete.timer = setTimeout(() => {
+        toast.classList.remove('show');
+        pendingDelete = null;
+    }, 5000);
+    
     if (currentNoteId === id) {
         currentNoteId = null;
         showScreen('home');
     }
-    showToast('Note deleted');
+}
+
+function undoDelete() {
+    if (!pendingDelete) return;
+    const toast = document.getElementById('undoToast');
+    toast.classList.remove('show');
+    
+    // Restore note
+    const { note, id } = pendingDelete;
+    data.notes[id] = note;
+    saveData();
+    
+    clearTimeout(pendingDelete.timer);
+    pendingDelete = null;
+    showToast('Note restored');
 }
 
 function toggleFavorite(id) {
@@ -987,9 +1192,7 @@ function openNote(id) {
     document.getElementById('noteTags').value = (note.tags || []).join(', ');
     document.getElementById('noteLastEdited').textContent = 'Last edited: ' + new Date(note.updatedAt).toLocaleString();
     
-    // Populate folder dropdown
     populateFolderDropdown(note.folder);
-    
     showScreen('editor');
 }
 
@@ -1011,7 +1214,6 @@ function saveCurrentNote() {
     note.updatedAt = new Date().toISOString();
     
     saveData();
-    showToast('Note saved!');
 }
 
 function populateFolderDropdown(selected) {
@@ -1042,8 +1244,7 @@ function createFolder(name) {
 }
 
 function deleteFolder(name) {
-    if (!confirm(`Delete folder "${name}"? Notes in this folder will be moved to "No folder".`)) return;
-    // Move notes out of this folder
+    if (!confirm(`Delete folder "${name}"? Notes will be moved to "No folder".`)) return;
     Object.values(data.notes).forEach(n => {
         if (n.folder === name) n.folder = '';
     });
@@ -1062,7 +1263,12 @@ function renderNotes() {
     
     if (notes.length === 0) {
         const msg = searchQuery ? 'No notes match your search.' : 'No notes yet. Tap "+" to create one.';
-        container.innerHTML = `<div class="empty-state"><div style="font-size:48px; margin-bottom:12px; opacity:0.3;">📝</div><p>${msg}</p></div>`;
+        container.innerHTML = `
+            <div class="empty-state">
+                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="12" y2="12"/></svg>
+                <p>${msg}</p>
+            </div>
+        `;
         return;
     }
     
@@ -1072,7 +1278,8 @@ function renderNotes() {
         const extraTags = (n.tags || []).length > 3 ? '+' + ((n.tags || []).length - 3) : '';
         const date = new Date(n.updatedAt || n.createdAt);
         const timeAgo = getTimeAgo(date);
-        const isFavorite = n.favorite ? '⭐' : '☆';
+        const isFavorite = n.favorite;
+        const isArchived = n.archived;
         
         return `
             <div class="note-card" data-id="${n.id}" style="border-left-color: ${n.folder && data.folders[n.folder] ? '#2ecc71' : '#5a8f75'};">
@@ -1080,22 +1287,28 @@ function renderNotes() {
                     <div class="title">${n.title || 'Untitled'}</div>
                     <div class="preview">${preview || 'Empty note'}</div>
                     <div class="meta">
-                        ${n.folder ? `<span class="folder-tag">📁 ${n.folder}</span>` : ''}
+                        ${n.folder ? `<span class="folder-tag">${n.folder}</span>` : ''}
                         ${tags.map(t => `<span class="tag">#${t}</span>`).join('')}
                         ${extraTags ? `<span class="tag">+${extraTags}</span>` : ''}
                         <span class="date">${timeAgo}</span>
                     </div>
                 </div>
                 <div class="actions">
-                    <button class="icon-btn-sm" data-action="favorite" data-id="${n.id}" title="Favorite">${isFavorite}</button>
-                    <button class="icon-btn-sm" data-action="archive" data-id="${n.id}" title="Archive">📦</button>
-                    <button class="icon-btn-sm danger" data-action="delete" data-id="${n.id}" title="Delete">🗑️</button>
+                    <button class="icon-btn-sm" data-action="favorite" data-id="${n.id}" title="Favorite">
+                        <svg class="icon-svg ${isFavorite ? 'star-filled' : 'star-empty'}" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                    </button>
+                    <button class="icon-btn-sm" data-action="archive" data-id="${n.id}" title="Archive">
+                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+                    </button>
+                    <button class="icon-btn-sm danger" data-action="delete" data-id="${n.id}" title="Delete">
+                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                    </button>
                 </div>
             </div>
         `;
     }).join('');
     
-    // Attach event listeners to action buttons
+    // Attach event listeners
     container.querySelectorAll('[data-action="favorite"]').forEach(btn => {
         btn.addEventListener('click', function(e) {
             e.stopPropagation();
@@ -1156,8 +1369,8 @@ function renderFolders() {
         return;
     }
     container.innerHTML = names.map(f => `
-        <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--border-color);">
-            <span style="color:var(--text-primary);">📁 ${f}</span>
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:6px 0; border-bottom:1px solid var(--border-color);">
+            <span style="color:var(--text-primary);">${f}</span>
             <button class="btn btn-sm btn-danger" data-action="deleteFolder" data-folder="${f}">✕</button>
         </div>
     `).join('');
@@ -1217,7 +1430,7 @@ function updateDriveButtons(connected) {
     if (pushBtn) pushBtn.disabled = !connected;
     if (pullBtn) pullBtn.disabled = !connected;
     if (connectBtn) {
-        connectBtn.textContent = connected ? '✅ Connected' : '🔗 Connect';
+        connectBtn.textContent = connected ? '✅ Connected' : 'Connect';
         connectBtn.className = connected ? 'btn btn-success btn-sm' : 'btn btn-primary btn-sm';
     }
 }
@@ -1481,6 +1694,9 @@ function loadSettings() {
 // EVENT BINDING
 // ============================================================
 function bindEvents() {
+    // Undo toast
+    document.getElementById('undoBtn').addEventListener('click', undoDelete);
+
     // Top bar
     document.getElementById('searchToggle').addEventListener('click', function() {
         const bar = document.getElementById('searchBar');
@@ -1533,6 +1749,7 @@ function bindEvents() {
     });
     document.getElementById('saveNoteBtn').addEventListener('click', function() {
         saveCurrentNote();
+        showToast('Note saved!');
     });
     
     // Auto-save in editor
@@ -1550,8 +1767,9 @@ function bindEvents() {
     });
     document.getElementById('fabNewFolder').addEventListener('click', function() {
         closeFab();
-        const name = prompt('Enter folder name:');
-        if (name) createFolder(name);
+        openModal('New Folder', 'Create a folder to organize your notes.', 'Folder name', 'Create', function(name) {
+            createFolder(name);
+        });
     });
     document.getElementById('fabPushDrive').addEventListener('click', function() { closeFab(); pushToDrive(); });
     document.getElementById('fabPullDrive').addEventListener('click', function() { closeFab(); pullFromDrive(); });
@@ -1559,8 +1777,13 @@ function bindEvents() {
     // Settings
     document.getElementById('addFolderBtn').addEventListener('click', function() {
         const input = document.getElementById('newFolderInput');
-        createFolder(input.value);
-        input.value = '';
+        const name = input.value.trim();
+        if (name) {
+            createFolder(name);
+            input.value = '';
+        } else {
+            showToast('Please enter a folder name.');
+        }
     });
     document.getElementById('newFolderInput').addEventListener('keydown', function(e) {
         if (e.key === 'Enter') {
@@ -1577,12 +1800,22 @@ function bindEvents() {
     
     // Modal overlay
     document.getElementById('modalOverlay').addEventListener('click', function(e) {
-        if (e.target === this) this.classList.remove('active');
+        if (e.target === this) closeModal();
     });
     
     // Collapsible groups
     document.querySelectorAll('.group-header').forEach(header => {
-        header.addEventListener('click', function() { toggleGroup(this); });
+        header.addEventListener('click', function() { 
+            const content = this.nextElementSibling;
+            const icon = this.querySelector('.toggle-icon');
+            if (content.classList.contains('open')) {
+                content.classList.remove('open');
+                icon.classList.remove('open');
+            } else {
+                content.classList.add('open');
+                icon.classList.add('open');
+            }
+        });
     });
 }
 
@@ -1612,6 +1845,8 @@ window.exportBackup = exportBackup;
 window.importBackup = importBackup;
 window.resetAllData = resetAllData;
 window.saveCurrentNote = saveCurrentNote;
+window.openModal = openModal;
+window.closeModal = closeModal;
 </script>
 </body>
 </html>
