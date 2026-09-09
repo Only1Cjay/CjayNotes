@@ -1,1 +1,1617 @@
 
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>CjayNotes — Note Tracker</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --bg-primary: #0a1a12;
+            --bg-secondary: #0f281d;
+            --bg-card: #143829;
+            --bg-input: #0a1a12;
+            --bg-modal: #0f281d;
+            --bg-fab: #1a4a35;
+            --text-primary: #e8f5ee;
+            --text-secondary: #8ac4a8;
+            --text-muted: #5a8f75;
+            --border-color: #1a4a35;
+            --shadow-color: rgba(0,0,0,0.5);
+            --accent: #2ecc71;
+            --accent-hover: #27ae60;
+            --accent-light: #4cd98a;
+            --danger: #dc2626;
+            --success: #2ecc71;
+            --warning: #eab308;
+            --btn-primary: #2ecc71;
+            --btn-primary-text: #081a12;
+            --btn-neutral: #1a4a35;
+            --btn-neutral-text: #8ac4a8;
+            --btn-neutral-hover: #2ecc71;
+            --card-bg: #0f281d;
+            --deck-border: #2ecc71;
+            --overlay-bg: rgba(0,0,0,0.7);
+            --fab-shadow: rgba(46, 204, 113, 0.4);
+            --scrollbar-track: #0a1a12;
+            --scrollbar-thumb: #1a4a35;
+            --modal-bg: #0f281d;
+            --font-header: 'Plus Jakarta Sans', sans-serif;
+            --font-body: 'Inter', sans-serif;
+            --card-shadow: 0 4px 16px rgba(0,0,0,0.3);
+            --card-shadow-hover: 0 6px 24px rgba(0,0,0,0.4);
+            --transition-speed: 0.2s;
+        }
+
+        [data-theme="light"] {
+            --bg-primary: #eef7f2;
+            --bg-secondary: #dcebe2;
+            --bg-card: #ffffff;
+            --bg-input: #eef7f2;
+            --bg-modal: #ffffff;
+            --bg-fab: #dcebe2;
+            --text-primary: #081a12;
+            --text-secondary: #1a4a35;
+            --text-muted: #5a8f75;
+            --border-color: #b8d5c8;
+            --shadow-color: rgba(0,0,0,0.08);
+            --btn-neutral: #dcebe2;
+            --btn-neutral-text: #1a4a35;
+            --btn-neutral-hover: #2ecc71;
+            --card-bg: #ffffff;
+            --overlay-bg: rgba(0,0,0,0.4);
+            --fab-shadow: rgba(46, 204, 113, 0.3);
+            --scrollbar-track: #dcebe2;
+            --scrollbar-thumb: #8ac4a8;
+            --modal-bg: #ffffff;
+            --card-shadow: 0 4px 16px rgba(0,0,0,0.08);
+            --card-shadow-hover: 0 6px 24px rgba(0,0,0,0.12);
+        }
+
+        html { scroll-behavior: smooth; }
+        body {
+            font-family: var(--font-body);
+            background: var(--bg-primary);
+            color: var(--text-primary);
+            min-height: 100vh;
+            padding: 16px 16px 90px 16px;
+            transition: background var(--transition-speed), color var(--transition-speed);
+            overflow-x: hidden;
+            -webkit-tap-highlight-color: transparent;
+        }
+        ::-webkit-scrollbar { width: 4px; }
+        ::-webkit-scrollbar-track { background: var(--scrollbar-track); }
+        ::-webkit-scrollbar-thumb { background: var(--scrollbar-thumb); border-radius: 4px; }
+
+        .hidden { display: none !important; }
+        
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 16px;
+        }
+        .top-bar h1 {
+            font-family: var(--font-header);
+            font-weight: 800;
+            font-size: 22px;
+            color: var(--text-primary);
+            letter-spacing: -0.5px;
+        }
+        .top-bar h1 span { color: var(--accent); }
+        .top-bar .right-group {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+        }
+        .top-bar .icon-btn {
+            background: var(--bg-secondary);
+            border: none;
+            border-radius: 50%;
+            width: 34px;
+            height: 34px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 15px;
+            color: var(--text-secondary);
+            transition: var(--transition-speed);
+            touch-action: manipulation;
+        }
+        .top-bar .icon-btn:active { transform: scale(0.9); background: var(--accent); color: var(--bg-primary); }
+
+        .btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 10px;
+            font-weight: 600;
+            font-size: 14px;
+            font-family: var(--font-body);
+            cursor: pointer;
+            transition: var(--transition-speed);
+            background: var(--btn-neutral);
+            color: var(--btn-neutral-text);
+            touch-action: manipulation;
+            min-height: 44px;
+        }
+        .btn:active { transform: scale(0.96); }
+        .btn-primary {
+            background: var(--btn-primary);
+            color: var(--btn-primary-text);
+        }
+        .btn-primary:active { background: var(--accent-hover); }
+        .btn-neutral { background: var(--btn-neutral); color: var(--btn-neutral-text); }
+        .btn-neutral:active { background: var(--btn-neutral-hover); color: var(--bg-primary); }
+        .btn-danger { background: var(--danger); color: #fff; }
+        .btn-outline { background: transparent; border: 1.5px solid var(--border-color); color: var(--text-secondary); }
+        .btn-sm { padding: 6px 14px; font-size: 12px; min-height: 36px; }
+        .btn-block { width: 100%; padding: 14px; }
+        
+        .screen { display: none; animation: fadeIn 0.2s ease; }
+        .screen.active { display: block; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(6px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* ===== STATS BAR ===== */
+        .stats-bar {
+            display: flex;
+            gap: 16px;
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 10px 16px;
+            margin-bottom: 16px;
+            box-shadow: var(--card-shadow);
+            transition: all var(--transition-speed);
+            flex-wrap: wrap;
+        }
+        .stats-bar .stat {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-size: 12px;
+            color: var(--text-secondary);
+            font-weight: 500;
+        }
+        .stats-bar .stat .num { font-weight: 700; color: var(--text-primary); font-size: 14px; }
+
+        /* ===== NOTE LIST ===== */
+        .note-grid { display: flex; flex-direction: column; gap: 10px; margin: 12px 0; }
+        .note-card {
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 14px 18px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            box-shadow: var(--card-shadow);
+            transition: all var(--transition-speed);
+            border-left: 3px solid var(--accent);
+            touch-action: manipulation;
+            cursor: pointer;
+        }
+        .note-card:active { transform: scale(0.98); }
+        .note-card .info {
+            flex: 1;
+            min-width: 0;
+        }
+        .note-card .info .title {
+            font-family: var(--font-header);
+            font-weight: 700;
+            font-size: 15px;
+            color: var(--text-primary);
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .note-card .info .preview {
+            font-size: 13px;
+            color: var(--text-muted);
+            margin-top: 2px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .note-card .info .meta {
+            display: flex;
+            gap: 8px;
+            margin-top: 4px;
+            flex-wrap: wrap;
+        }
+        .note-card .info .meta .tag {
+            font-size: 10px;
+            background: var(--bg-secondary);
+            padding: 1px 8px;
+            border-radius: 10px;
+            color: var(--text-secondary);
+        }
+        .note-card .info .meta .folder-tag {
+            font-size: 10px;
+            background: var(--accent);
+            color: var(--bg-primary);
+            padding: 1px 8px;
+            border-radius: 10px;
+            font-weight: 600;
+        }
+        .note-card .info .meta .date {
+            font-size: 10px;
+            color: var(--text-muted);
+        }
+        .note-card .actions {
+            display: flex;
+            gap: 6px;
+            flex-shrink: 0;
+            margin-left: 10px;
+        }
+        .note-card .actions .icon-btn-sm {
+            background: var(--bg-secondary);
+            border: none;
+            border-radius: 50%;
+            width: 30px;
+            height: 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            font-size: 13px;
+            color: var(--text-secondary);
+            transition: var(--transition-speed);
+            touch-action: manipulation;
+        }
+        .note-card .actions .icon-btn-sm:active { transform: scale(0.9); background: var(--accent); color: var(--bg-primary); }
+        .note-card .actions .icon-btn-sm.danger:active { background: var(--danger); color: #fff; }
+        .note-card .actions .icon-btn-sm .star { color: var(--warning); }
+
+        /* ===== NOTE EDITOR ===== */
+        .editor-container {
+            background: var(--bg-card);
+            border-radius: 18px;
+            padding: 20px;
+            box-shadow: var(--card-shadow);
+            transition: all var(--transition-speed);
+        }
+        .editor-container input[type="text"] {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-family: var(--font-header);
+            font-weight: 700;
+            font-size: 20px;
+            color: var(--text-primary);
+            padding: 0 0 8px 0;
+            outline: none;
+        }
+        .editor-container input[type="text"]::placeholder { color: var(--text-muted); }
+        .editor-container textarea {
+            width: 100%;
+            border: none;
+            background: transparent;
+            font-family: var(--font-body);
+            font-size: 15px;
+            color: var(--text-primary);
+            resize: vertical;
+            min-height: 200px;
+            padding: 8px 0;
+            outline: none;
+            line-height: 1.6;
+        }
+        .editor-container textarea::placeholder { color: var(--text-muted); }
+        .editor-container .editor-meta {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid var(--border-color);
+        }
+        .editor-container .editor-meta .field {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        .editor-container .editor-meta .field label {
+            font-size: 10px;
+            color: var(--text-muted);
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.04em;
+        }
+        .editor-container .editor-meta .field input,
+        .editor-container .editor-meta .field select {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 6px 10px;
+            font-family: var(--font-body);
+            font-size: 13px;
+            color: var(--text-primary);
+            outline: none;
+            transition: var(--transition-speed);
+        }
+        .editor-container .editor-meta .field input:focus,
+        .editor-container .editor-meta .field select:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-light);
+        }
+        .editor-container .editor-meta .field input { min-width: 120px; }
+        .editor-container .editor-meta .field select { min-width: 100px; }
+
+        /* ===== FILTER BAR ===== */
+        .filter-bar {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            margin-bottom: 12px;
+        }
+        .filter-bar .filter-btn {
+            padding: 6px 14px;
+            border: 1px solid var(--border-color);
+            border-radius: 999px;
+            background: transparent;
+            color: var(--text-secondary);
+            font-size: 12px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition-speed);
+            font-family: var(--font-body);
+            touch-action: manipulation;
+        }
+        .filter-bar .filter-btn:active { transform: scale(0.95); }
+        .filter-bar .filter-btn.active {
+            background: var(--accent);
+            color: var(--bg-primary);
+            border-color: var(--accent);
+        }
+        .filter-bar .filter-btn .count {
+            opacity: 0.6;
+            font-size: 10px;
+        }
+
+        /* ===== SEARCH ===== */
+        .search-bar {
+            display: flex;
+            gap: 8px;
+            margin-bottom: 12px;
+        }
+        .search-bar input {
+            flex: 1;
+            background: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            padding: 10px 16px;
+            font-family: var(--font-body);
+            font-size: 14px;
+            color: var(--text-primary);
+            outline: none;
+            transition: var(--transition-speed);
+            min-height: 44px;
+        }
+        .search-bar input:focus {
+            border-color: var(--accent);
+            box-shadow: 0 0 0 2px var(--accent-light);
+        }
+        .search-bar input::placeholder { color: var(--text-muted); }
+
+        /* ===== SETTINGS ===== */
+        .settings-group {
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 16px;
+            margin: 12px 0;
+            box-shadow: var(--card-shadow);
+            transition: all var(--transition-speed);
+        }
+        .settings-group .group-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            cursor: pointer;
+            user-select: none;
+            touch-action: manipulation;
+        }
+        .settings-group .group-header:active { opacity: 0.6; }
+        .settings-group .group-header h3 {
+            font-family: var(--font-header);
+            font-weight: 700;
+            font-size: 16px;
+            color: var(--text-primary);
+        }
+        .settings-group .group-header .toggle-icon {
+            font-size: 18px;
+            color: var(--text-muted);
+            transition: transform var(--transition-speed);
+        }
+        .settings-group .group-header .toggle-icon.open { transform: rotate(180deg); }
+        .settings-group .group-content {
+            overflow: hidden;
+            max-height: 0;
+            opacity: 0;
+            transition: max-height 0.3s ease, opacity 0.3s ease, margin 0.3s ease;
+            margin-top: 0;
+        }
+        .settings-group .group-content.open {
+            max-height: 2000px;
+            opacity: 1;
+            margin-top: 12px;
+        }
+        .settings-group label {
+            display: block;
+            font-size: 13px;
+            color: var(--text-secondary);
+            margin: 10px 0 4px;
+            font-weight: 500;
+        }
+        .settings-group input {
+            width: 100%;
+            padding: 10px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: var(--font-body);
+            transition: all var(--transition-speed);
+        }
+        .settings-group input:focus { outline: 2px solid var(--accent); border-color: transparent; }
+
+        .drive-status { padding: 8px 12px; border-radius: 8px; margin: 4px 0; font-size: 13px; font-weight: 500; }
+        .drive-status.connected { background: var(--success); color: #081a12; }
+        .drive-status.disconnected { background: var(--danger); color: #fff; }
+        .drive-status.pending { background: var(--warning); color: #000; }
+        .sync-info { font-size: 12px; color: var(--text-muted); margin-top: 4px; font-weight: 500; }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0;
+            width: 100%; height: 100%;
+            background: var(--overlay-bg);
+            backdrop-filter: blur(6px);
+            display: none;
+            justify-content: center;
+            align-items: center;
+            z-index: 999;
+            padding: 20px;
+            transition: background var(--transition-speed);
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: var(--modal-bg);
+            border-radius: 20px;
+            padding: 28px 24px;
+            max-width: 440px;
+            width: 100%;
+            max-height: 90vh;
+            overflow-y: auto;
+            animation: slideUp 0.2s ease;
+            box-shadow: var(--card-shadow-hover);
+        }
+        @keyframes slideUp {
+            from { transform: translateY(30px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        .modal h2 { font-family: var(--font-header); font-weight: 700; font-size: 20px; color: var(--text-primary); margin-bottom: 6px; }
+        .modal .sub { color: var(--text-secondary); font-size: 14px; margin-bottom: 16px; font-weight: 500; }
+        .modal label { display: block; font-size: 13px; color: var(--text-secondary); margin: 12px 0 4px; font-weight: 500; }
+        .modal input, .modal textarea, .modal select {
+            width: 100%;
+            padding: 12px 14px;
+            border-radius: 10px;
+            border: 1px solid var(--border-color);
+            background: var(--bg-input);
+            color: var(--text-primary);
+            font-size: 15px;
+            font-family: var(--font-body);
+            resize: vertical;
+            transition: all var(--transition-speed);
+        }
+        .modal input:focus, .modal textarea:focus, .modal select:focus {
+            outline: 2px solid var(--accent);
+            border-color: transparent;
+        }
+        .modal .btn-row { display: flex; gap: 10px; margin-top: 18px; }
+        .modal .btn-row .btn { flex: 1; text-align: center; }
+
+        .fab-container {
+            position: fixed;
+            bottom: 24px;
+            right: 20px;
+            z-index: 100;
+            display: flex;
+            flex-direction: column;
+            align-items: flex-end;
+            gap: 8px;
+        }
+        .fab {
+            width: 56px;
+            height: 56px;
+            border-radius: 50%;
+            border: none;
+            background: var(--accent);
+            color: var(--bg-primary);
+            font-size: 28px;
+            font-weight: 300;
+            cursor: pointer;
+            box-shadow: 0 4px 16px var(--fab-shadow);
+            transition: var(--transition-speed);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            touch-action: manipulation;
+        }
+        .fab:active { transform: scale(0.9); }
+        .fab.open { transform: rotate(45deg); background: var(--danger); color: #fff; }
+
+        .fab-menu {
+            background: var(--bg-card);
+            border-radius: 14px;
+            padding: 8px 0;
+            min-width: 200px;
+            box-shadow: var(--card-shadow-hover);
+            transform: scale(0.8) translateY(10px);
+            opacity: 0;
+            pointer-events: none;
+            transition: var(--transition-speed);
+            border: 1px solid var(--border-color);
+        }
+        .fab-menu.open {
+            transform: scale(1) translateY(0);
+            opacity: 1;
+            pointer-events: auto;
+        }
+        .fab-menu-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px 18px;
+            width: 100%;
+            border: none;
+            background: transparent;
+            color: var(--text-primary);
+            font-size: 14px;
+            font-family: var(--font-body);
+            font-weight: 500;
+            cursor: pointer;
+            transition: var(--transition-speed);
+            touch-action: manipulation;
+        }
+        .fab-menu-item:active { background: var(--bg-secondary); }
+        .fab-menu-item .icon { font-size: 18px; width: 24px; text-align: center; color: var(--text-secondary); }
+        .fab-menu-item .label { flex: 1; text-align: left; }
+        .fab-menu-divider { border: none; border-top: 1px solid var(--border-color); margin: 4px 12px; }
+
+        .empty-state { text-align: center; padding: 40px 0; color: var(--text-muted); }
+        .empty-state .big-icon { font-size: 48px; margin-bottom: 12px; opacity: 0.3; }
+        .text-muted { color: var(--text-muted); font-size: 13px; font-weight: 500; }
+        .text-center { text-align: center; }
+        .mt-12 { margin-top: 12px; }
+        .mb-8 { margin-bottom: 8px; }
+        .flex-between { display: flex; justify-content: space-between; align-items: center; flex-wrap: wrap; gap: 8px; }
+
+        .toast {
+            position: fixed;
+            bottom: 100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: var(--bg-card);
+            color: var(--text-primary);
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: 1px solid var(--border-color);
+            box-shadow: var(--card-shadow-hover);
+            font-size: 14px;
+            font-family: var(--font-body);
+            font-weight: 500;
+            z-index: 200;
+            opacity: 0;
+            transition: var(--transition-speed);
+            pointer-events: none;
+            text-align: center;
+            max-width: 90%;
+        }
+        .toast.show { opacity: 1; }
+        .hidden-file-input { display: none; }
+
+        @media (max-width: 400px) {
+            .stats-bar { gap: 10px; }
+            .stats-bar .stat { font-size: 11px; }
+            .note-card { flex-wrap: wrap; }
+            .note-card .actions { margin-left: 0; margin-top: 6px; }
+            .editor-container .editor-meta { flex-direction: column; }
+            .filter-bar .filter-btn { font-size: 11px; padding: 4px 10px; }
+        }
+    </style>
+</head>
+<body>
+
+<div class="toast" id="toast"></div>
+
+<!-- ===== TOP BAR ===== -->
+<div class="top-bar">
+    <h1>Cjay<span>Notes</span></h1>
+    <div class="right-group">
+        <button class="icon-btn" id="searchToggle" aria-label="Toggle search">🔍</button>
+        <button class="icon-btn" id="themeBtn" aria-label="Toggle theme">🌙</button>
+        <button class="icon-btn" id="homeBtn" aria-label="Home">🏠</button>
+        <button class="icon-btn" id="settingsBtn" aria-label="Settings">⚙️</button>
+    </div>
+</div>
+
+<!-- ===== SCREEN: HOME ===== -->
+<div id="screen-home" class="screen active">
+    <!-- Search Bar (toggleable) -->
+    <div class="search-bar hidden" id="searchBar">
+        <input type="text" id="searchInput" placeholder="Search notes, tags, or folders...">
+        <button class="btn btn-sm btn-primary" id="clearSearchBtn">✕</button>
+    </div>
+
+    <!-- Filter Bar -->
+    <div class="filter-bar" id="filterBar">
+        <button class="filter-btn active" data-filter="all">All <span class="count" id="countAll">0</span></button>
+        <button class="filter-btn" data-filter="favorites">⭐ Favorites <span class="count" id="countFavorites">0</span></button>
+        <button class="filter-btn" data-filter="archived">📦 Archived <span class="count" id="countArchived">0</span></button>
+    </div>
+
+    <!-- Stats Bar -->
+    <div class="stats-bar">
+        <div class="stat">📝 <span class="num" id="statNotes">0</span> notes</div>
+        <div class="stat">🏷️ <span class="num" id="statTags">0</span> tags</div>
+        <div class="stat">📁 <span class="num" id="statFolders">0</span> folders</div>
+        <div class="stat" id="syncStatusStat">☁️ <span class="num" id="syncStatusText">Not synced</span></div>
+    </div>
+
+    <!-- Note List -->
+    <div id="noteList" class="note-grid"></div>
+</div>
+
+<!-- ===== SCREEN: NOTE EDITOR ===== -->
+<div id="screen-editor" class="screen">
+    <div class="flex-between mb-8">
+        <button class="btn btn-outline btn-sm" id="backFromEditorBtn">← Back</button>
+        <div style="display:flex; gap:6px;">
+            <button class="btn btn-sm btn-neutral" id="saveNoteBtn">💾 Save</button>
+        </div>
+    </div>
+    <div class="editor-container">
+        <input type="text" id="noteTitle" placeholder="Note title...">
+        <textarea id="noteContent" placeholder="Start writing your note..."></textarea>
+        <div class="editor-meta">
+            <div class="field">
+                <label>Tags (comma-separated)</label>
+                <input type="text" id="noteTags" placeholder="work, personal, ideas">
+            </div>
+            <div class="field">
+                <label>Folder</label>
+                <select id="noteFolder">
+                    <option value="">No folder</option>
+                </select>
+            </div>
+            <div class="field">
+                <label>Last edited</label>
+                <span id="noteLastEdited" style="font-size:12px; color:var(--text-muted); padding:6px 0;">Just now</span>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- ===== SCREEN: SETTINGS ===== -->
+<div id="screen-settings" class="screen">
+    <h2 style="font-family:var(--font-header); font-weight:700; font-size:20px; color:var(--text-primary); margin-bottom:16px;">Settings</h2>
+
+    <!-- Folders -->
+    <div class="settings-group">
+        <div class="group-header" data-group="folders">
+            <h3>📁 Folders</h3>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="group-content">
+            <p class="text-muted" style="margin-bottom:8px;">Manage your folders.</p>
+            <div id="folderList" style="margin-bottom:8px;"></div>
+            <div style="display:flex; gap:8px;">
+                <input type="text" id="newFolderInput" placeholder="New folder name..." style="flex:1;">
+                <button class="btn btn-sm btn-primary" id="addFolderBtn">Add</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Google Drive Sync -->
+    <div class="settings-group">
+        <div class="group-header" data-group="drive">
+            <h3>☁️ Google Drive Sync</h3>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="group-content">
+            <p class="text-muted" style="margin-bottom:8px;">Sync your notes across devices.</p>
+            <label>Google Client ID</label>
+            <input type="text" id="googleClientId" placeholder="Paste your Google Client ID here...">
+            <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn btn-primary btn-sm" id="connectDriveBtn">🔗 Connect</button>
+                <button class="btn btn-success btn-sm" id="pushDriveBtn" disabled>📤 Push</button>
+                <button class="btn btn-neutral btn-sm" id="pullDriveBtn" disabled>📥 Pull</button>
+            </div>
+            <div id="driveStatus" style="margin-top:8px;"></div>
+            <div id="syncInfo" class="sync-info"></div>
+        </div>
+    </div>
+
+    <!-- Backup & Restore -->
+    <div class="settings-group">
+        <div class="group-header" data-group="backup">
+            <h3>💾 Backup & Restore</h3>
+            <span class="toggle-icon">▼</span>
+        </div>
+        <div class="group-content">
+            <p class="text-muted" style="margin-bottom:8px;">Export your notes as a JSON file or import a backup.</p>
+            <div style="display:flex; gap:8px; flex-wrap:wrap;">
+                <button class="btn btn-success btn-sm" id="exportBackupBtn">📤 Export</button>
+                <button class="btn btn-neutral btn-sm" id="importBackupBtn">📂 Import</button>
+            </div>
+        </div>
+    </div>
+
+    <button class="btn btn-danger btn-block" id="resetAllBtn">🗑️ Reset All Data</button>
+</div>
+
+<!-- ===== MODAL ===== -->
+<div class="modal-overlay" id="modalOverlay">
+    <div class="modal" id="modalContent"></div>
+</div>
+
+<!-- ===== FAB ===== -->
+<div class="fab-container">
+    <div class="fab-menu" id="fabMenu">
+        <button class="fab-menu-item" id="fabNewNote"><span class="icon">➕</span><span class="label">New Note</span></button>
+        <button class="fab-menu-item" id="fabNewFolder"><span class="icon">📁</span><span class="label">New Folder</span></button>
+        <hr class="fab-menu-divider">
+        <button class="fab-menu-item" id="fabPushDrive"><span class="icon">☁️</span><span class="label">Push to Drive</span></button>
+        <button class="fab-menu-item" id="fabPullDrive"><span class="icon">☁️</span><span class="label">Pull from Drive</span></button>
+    </div>
+    <button class="fab" id="fabButton">+</button>
+</div>
+
+<input type="file" id="backupInput" class="hidden-file-input" accept=".json">
+
+<script>
+// ============================================================
+// DATA LAYER
+// ============================================================
+const STORAGE_KEY = 'cjaynotes_data';
+const CLIENT_ID_KEY = 'cjaynotes_google_client_id';
+const TOKEN_KEY = 'cjaynotes_google_token';
+const SYNC_TIME_KEY = 'cjaynotes_last_sync';
+
+function getDefaultData() {
+    return { notes: {}, folders: {} };
+}
+
+let data = loadData();
+let currentNoteId = null;
+let currentFilter = 'all';
+let searchQuery = '';
+let tokenClient = null;
+let saveTimeout = null;
+
+function loadData() {
+    try {
+        const raw = localStorage.getItem(STORAGE_KEY);
+        if (raw) {
+            const parsed = JSON.parse(raw);
+            if (!parsed.notes) parsed.notes = {};
+            if (!parsed.folders) parsed.folders = {};
+            return parsed;
+        }
+    } catch (e) {}
+    return getDefaultData();
+}
+
+function saveData() {
+    clearTimeout(saveTimeout);
+    saveTimeout = setTimeout(() => {
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+        renderNotes();
+        updateStats();
+    }, 100);
+}
+
+function generateId() { return Date.now().toString(36) + Math.random().toString(36).slice(2,6); }
+
+function getNotesArray() {
+    const notes = Object.values(data.notes);
+    // Sort by updatedAt (newest first)
+    return notes.sort((a, b) => {
+        const da = new Date(a.updatedAt || a.createdAt);
+        const db = new Date(b.updatedAt || b.createdAt);
+        return db - da;
+    });
+}
+
+function getFilteredNotes() {
+    let notes = getNotesArray();
+    
+    if (currentFilter === 'favorites') {
+        notes = notes.filter(n => n.favorite);
+    } else if (currentFilter === 'archived') {
+        notes = notes.filter(n => n.archived);
+    } else {
+        notes = notes.filter(n => !n.archived);
+        if (currentFilter === 'all') {
+            // Show all non-archived
+        }
+    }
+    
+    if (searchQuery) {
+        const q = searchQuery.toLowerCase();
+        notes = notes.filter(n => {
+            const titleMatch = (n.title || '').toLowerCase().includes(q);
+            const contentMatch = (n.content || '').toLowerCase().includes(q);
+            const tagMatch = (n.tags || []).some(t => t.toLowerCase().includes(q));
+            const folderMatch = (n.folder || '').toLowerCase().includes(q);
+            return titleMatch || contentMatch || tagMatch || folderMatch;
+        });
+    }
+    
+    return notes;
+}
+
+// ============================================================
+// THEME
+// ============================================================
+function getStoredTheme() {
+    return localStorage.getItem('cjaynotes_theme') || 'dark';
+}
+
+function applyTheme(theme) {
+    document.documentElement.setAttribute('data-theme', theme);
+    localStorage.setItem('cjaynotes_theme', theme);
+    document.getElementById('themeBtn').textContent = theme === 'dark' ? '🌙' : '☀️';
+}
+
+function toggleTheme() {
+    const current = getStoredTheme();
+    applyTheme(current === 'dark' ? 'light' : 'dark');
+}
+
+applyTheme(getStoredTheme());
+
+// ============================================================
+// TOAST
+// ============================================================
+let toastTimeout;
+
+function showToast(msg) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    clearTimeout(toastTimeout);
+    toastTimeout = setTimeout(() => el.classList.remove('show'), 2500);
+}
+
+// ============================================================
+// COLLAPSIBLE GROUPS
+// ============================================================
+function toggleGroup(header) {
+    const content = header.nextElementSibling;
+    const icon = header.querySelector('.toggle-icon');
+    if (content.classList.contains('open')) {
+        content.classList.remove('open');
+        icon.classList.remove('open');
+    } else {
+        content.classList.add('open');
+        icon.classList.add('open');
+    }
+}
+
+// ============================================================
+// FAB
+// ============================================================
+function toggleFab() {
+    const menu = document.getElementById('fabMenu');
+    const btn = document.getElementById('fabButton');
+    menu.classList.toggle('open');
+    btn.classList.toggle('open');
+}
+
+function closeFab() {
+    const menu = document.getElementById('fabMenu');
+    const btn = document.getElementById('fabButton');
+    menu.classList.remove('open');
+    btn.classList.remove('open');
+}
+
+// ============================================================
+// NOTE CRUD
+// ============================================================
+function createNote(title = '', content = '') {
+    const id = generateId();
+    const now = new Date().toISOString();
+    data.notes[id] = {
+        id: id,
+        title: title,
+        content: content,
+        tags: [],
+        folder: '',
+        favorite: false,
+        archived: false,
+        createdAt: now,
+        updatedAt: now
+    };
+    saveData();
+    return id;
+}
+
+function deleteNote(id) {
+    if (!confirm('Delete this note?')) return;
+    delete data.notes[id];
+    saveData();
+    if (currentNoteId === id) {
+        currentNoteId = null;
+        showScreen('home');
+    }
+    showToast('Note deleted');
+}
+
+function toggleFavorite(id) {
+    const note = data.notes[id];
+    if (note) {
+        note.favorite = !note.favorite;
+        note.updatedAt = new Date().toISOString();
+        saveData();
+    }
+}
+
+function toggleArchive(id) {
+    const note = data.notes[id];
+    if (note) {
+        note.archived = !note.archived;
+        note.updatedAt = new Date().toISOString();
+        saveData();
+        if (currentNoteId === id) {
+            currentNoteId = null;
+            showScreen('home');
+        }
+        showToast(note.archived ? 'Note archived' : 'Note unarchived');
+    }
+}
+
+function openNote(id) {
+    currentNoteId = id;
+    const note = data.notes[id];
+    if (!note) return;
+    
+    document.getElementById('noteTitle').value = note.title || '';
+    document.getElementById('noteContent').value = note.content || '';
+    document.getElementById('noteTags').value = (note.tags || []).join(', ');
+    document.getElementById('noteLastEdited').textContent = 'Last edited: ' + new Date(note.updatedAt).toLocaleString();
+    
+    // Populate folder dropdown
+    populateFolderDropdown(note.folder);
+    
+    showScreen('editor');
+}
+
+function saveCurrentNote() {
+    if (!currentNoteId) return;
+    const note = data.notes[currentNoteId];
+    if (!note) return;
+    
+    const title = document.getElementById('noteTitle').value.trim();
+    const content = document.getElementById('noteContent').value;
+    const tagsRaw = document.getElementById('noteTags').value.trim();
+    const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(t => t) : [];
+    const folder = document.getElementById('noteFolder').value;
+    
+    note.title = title || 'Untitled';
+    note.content = content;
+    note.tags = tags;
+    note.folder = folder;
+    note.updatedAt = new Date().toISOString();
+    
+    saveData();
+    showToast('Note saved!');
+}
+
+function populateFolderDropdown(selected) {
+    const select = document.getElementById('noteFolder');
+    const currentValue = select.value;
+    select.innerHTML = '<option value="">No folder</option>';
+    const folders = Object.keys(data.folders).sort();
+    folders.forEach(f => {
+        const opt = document.createElement('option');
+        opt.value = f;
+        opt.textContent = f;
+        if (f === selected || f === currentValue) opt.selected = true;
+        select.appendChild(opt);
+    });
+}
+
+// ============================================================
+// FOLDER CRUD
+// ============================================================
+function createFolder(name) {
+    name = name.trim();
+    if (!name) { showToast('Please enter a folder name.'); return; }
+    if (data.folders[name]) { showToast('Folder already exists.'); return; }
+    data.folders[name] = { name: name };
+    saveData();
+    showToast('Folder created: ' + name);
+    renderFolders();
+}
+
+function deleteFolder(name) {
+    if (!confirm(`Delete folder "${name}"? Notes in this folder will be moved to "No folder".`)) return;
+    // Move notes out of this folder
+    Object.values(data.notes).forEach(n => {
+        if (n.folder === name) n.folder = '';
+    });
+    delete data.folders[name];
+    saveData();
+    renderFolders();
+    showToast('Folder deleted');
+}
+
+// ============================================================
+// RENDER: NOTES
+// ============================================================
+function renderNotes() {
+    const container = document.getElementById('noteList');
+    const notes = getFilteredNotes();
+    
+    if (notes.length === 0) {
+        const msg = searchQuery ? 'No notes match your search.' : 'No notes yet. Tap "+" to create one.';
+        container.innerHTML = `<div class="empty-state"><div style="font-size:48px; margin-bottom:12px; opacity:0.3;">📝</div><p>${msg}</p></div>`;
+        return;
+    }
+    
+    container.innerHTML = notes.map(n => {
+        const preview = (n.content || '').slice(0, 100) + ((n.content || '').length > 100 ? '...' : '');
+        const tags = (n.tags || []).slice(0, 3);
+        const extraTags = (n.tags || []).length > 3 ? '+' + ((n.tags || []).length - 3) : '';
+        const date = new Date(n.updatedAt || n.createdAt);
+        const timeAgo = getTimeAgo(date);
+        const isFavorite = n.favorite ? '⭐' : '☆';
+        
+        return `
+            <div class="note-card" data-id="${n.id}" style="border-left-color: ${n.folder && data.folders[n.folder] ? '#2ecc71' : '#5a8f75'};">
+                <div class="info" onclick="openNote('${n.id}')">
+                    <div class="title">${n.title || 'Untitled'}</div>
+                    <div class="preview">${preview || 'Empty note'}</div>
+                    <div class="meta">
+                        ${n.folder ? `<span class="folder-tag">📁 ${n.folder}</span>` : ''}
+                        ${tags.map(t => `<span class="tag">#${t}</span>`).join('')}
+                        ${extraTags ? `<span class="tag">+${extraTags}</span>` : ''}
+                        <span class="date">${timeAgo}</span>
+                    </div>
+                </div>
+                <div class="actions">
+                    <button class="icon-btn-sm" data-action="favorite" data-id="${n.id}" title="Favorite">${isFavorite}</button>
+                    <button class="icon-btn-sm" data-action="archive" data-id="${n.id}" title="Archive">📦</button>
+                    <button class="icon-btn-sm danger" data-action="delete" data-id="${n.id}" title="Delete">🗑️</button>
+                </div>
+            </div>
+        `;
+    }).join('');
+    
+    // Attach event listeners to action buttons
+    container.querySelectorAll('[data-action="favorite"]').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleFavorite(this.dataset.id);
+        });
+    });
+    container.querySelectorAll('[data-action="archive"]').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleArchive(this.dataset.id);
+        });
+    });
+    container.querySelectorAll('[data-action="delete"]').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            deleteNote(this.dataset.id);
+        });
+    });
+}
+
+function getTimeAgo(date) {
+    const now = new Date();
+    const diff = now - date;
+    if (diff < 60000) return 'Just now';
+    if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
+    if (diff < 172800000) return 'Yesterday';
+    if (diff < 604800000) return Math.floor(diff / 86400000) + 'd ago';
+    return date.toLocaleDateString();
+}
+
+// ============================================================
+// RENDER: STATS & FILTERS
+// ============================================================
+function updateStats() {
+    const allNotes = Object.values(data.notes);
+    const total = allNotes.length;
+    const favorites = allNotes.filter(n => n.favorite).length;
+    const archived = allNotes.filter(n => n.archived).length;
+    const tags = new Set();
+    allNotes.forEach(n => (n.tags || []).forEach(t => tags.add(t)));
+    const folders = Object.keys(data.folders).length;
+    
+    document.getElementById('statNotes').textContent = total;
+    document.getElementById('statTags').textContent = tags.size;
+    document.getElementById('statFolders').textContent = folders;
+    
+    document.getElementById('countAll').textContent = total - archived;
+    document.getElementById('countFavorites').textContent = favorites;
+    document.getElementById('countArchived').textContent = archived;
+}
+
+function renderFolders() {
+    const container = document.getElementById('folderList');
+    const names = Object.keys(data.folders).sort();
+    if (names.length === 0) {
+        container.innerHTML = '<p class="text-muted">No folders yet.</p>';
+        return;
+    }
+    container.innerHTML = names.map(f => `
+        <div style="display:flex; justify-content:space-between; align-items:center; padding:4px 0; border-bottom:1px solid var(--border-color);">
+            <span style="color:var(--text-primary);">📁 ${f}</span>
+            <button class="btn btn-sm btn-danger" data-action="deleteFolder" data-folder="${f}">✕</button>
+        </div>
+    `).join('');
+    
+    container.querySelectorAll('[data-action="deleteFolder"]').forEach(btn => {
+        btn.addEventListener('click', function() {
+            deleteFolder(this.dataset.folder);
+        });
+    });
+}
+
+// ============================================================
+// GOOGLE DRIVE SYNC
+// ============================================================
+function saveGoogleClientId() {
+    const clientId = document.getElementById('googleClientId').value.trim();
+    if (clientId) {
+        localStorage.setItem(CLIENT_ID_KEY, clientId);
+        showToast('Client ID saved!');
+    }
+}
+
+function loadGoogleClientId() { return localStorage.getItem(CLIENT_ID_KEY) || ''; }
+function saveGoogleToken(token) { localStorage.setItem(TOKEN_KEY, token); }
+function loadGoogleToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
+
+function setLastSyncTime() {
+    localStorage.setItem(SYNC_TIME_KEY, new Date().toISOString());
+    updateSyncInfo();
+}
+
+function getLastSyncTime() { return localStorage.getItem(SYNC_TIME_KEY) || null; }
+
+function updateSyncInfo() {
+    const el = document.getElementById('syncInfo');
+    if (!el) return;
+    const time = getLastSyncTime();
+    if (time) {
+        el.textContent = 'Last synced: ' + new Date(time).toLocaleString();
+        document.getElementById('syncStatusText').textContent = new Date(time).toLocaleDateString();
+    } else {
+        el.textContent = 'Not synced yet. Push or pull data.';
+        document.getElementById('syncStatusText').textContent = 'Not synced';
+    }
+}
+
+function setDriveStatus(msg, type) {
+    const el = document.getElementById('driveStatus');
+    if (!el) return;
+    el.innerHTML = '<div class="drive-status ' + (type || '') + '">' + msg + '</div>';
+}
+
+function updateDriveButtons(connected) {
+    const pushBtn = document.getElementById('pushDriveBtn');
+    const pullBtn = document.getElementById('pullDriveBtn');
+    const connectBtn = document.getElementById('connectDriveBtn');
+    if (pushBtn) pushBtn.disabled = !connected;
+    if (pullBtn) pullBtn.disabled = !connected;
+    if (connectBtn) {
+        connectBtn.textContent = connected ? '✅ Connected' : '🔗 Connect';
+        connectBtn.className = connected ? 'btn btn-success btn-sm' : 'btn btn-primary btn-sm';
+    }
+}
+
+function connectGoogleDrive() {
+    const clientId = document.getElementById('googleClientId').value.trim() || loadGoogleClientId();
+    if (!clientId) { showToast('Please enter your Google Client ID first.'); return; }
+    localStorage.setItem(CLIENT_ID_KEY, clientId);
+    if (typeof google === 'undefined') {
+        const script = document.createElement('script');
+        script.src = 'https://accounts.google.com/gsi/client';
+        script.onload = function() { initGoogleDrive(); };
+        script.onerror = function() { showToast('Failed to load Google library.'); setDriveStatus('❌ Failed to load Google library', 'disconnected'); };
+        document.head.appendChild(script);
+    } else { initGoogleDrive(); }
+}
+
+function initGoogleDrive() {
+    const clientId = loadGoogleClientId();
+    if (!clientId) return;
+    try {
+        tokenClient = google.accounts.oauth2.initTokenClient({
+            client_id: clientId,
+            scope: 'https://www.googleapis.com/auth/drive.file',
+            callback: function(tokenResponse) {
+                if (tokenResponse.access_token) {
+                    saveGoogleToken(tokenResponse.access_token);
+                    setDriveStatus('✅ Connected to Google Drive', 'connected');
+                    updateDriveButtons(true);
+                    showToast('Google Drive connected!');
+                    updateSyncInfo();
+                } else {
+                    setDriveStatus('❌ Connection failed', 'disconnected');
+                    updateDriveButtons(false);
+                }
+            },
+        });
+        tokenClient.requestAccessToken();
+    } catch (err) {
+        console.error('Google init error:', err);
+        setDriveStatus('❌ Error: ' + err.message, 'disconnected');
+        updateDriveButtons(false);
+    }
+}
+
+async function getOrCreateDriveFolder(token) {
+    const searchRes = await fetch(
+        "https://www.googleapis.com/drive/v3/files?q=name='CjayNotes' and mimeType='application/vnd.google-apps.folder' and trashed=false",
+        { headers: { 'Authorization': 'Bearer ' + token } }
+    );
+    const searchData = await searchRes.json();
+    if (searchData.files && searchData.files.length > 0) return searchData.files[0].id;
+    const createRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+        method: 'POST',
+        headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: 'CjayNotes', mimeType: 'application/vnd.google-apps.folder' })
+    });
+    const createData = await createRes.json();
+    return createData.id;
+}
+
+async function deleteOldBackups(token, folderId) {
+    const searchRes = await fetch(
+        `https://www.googleapis.com/drive/v3/files?q=name='cjaynotes_backup.json' and '${folderId}' in parents and trashed=false`,
+        { headers: { 'Authorization': 'Bearer ' + token } }
+    );
+    const searchData = await searchRes.json();
+    if (searchData.files) {
+        for (const file of searchData.files) {
+            await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}`, {
+                method: 'DELETE',
+                headers: { 'Authorization': 'Bearer ' + token }
+            });
+        }
+    }
+}
+
+async function pushToDrive() {
+    const token = loadGoogleToken();
+    if (!token) { showToast('Please connect to Google Drive first.'); return; }
+    const noteCount = Object.keys(data.notes).length;
+    if (noteCount === 0) { showToast('No notes to push.'); return; }
+    setDriveStatus('📤 Pushing...', 'pending');
+    try {
+        const folderId = await getOrCreateDriveFolder(token);
+        await deleteOldBackups(token, folderId);
+        const backupData = { 
+            data: data, 
+            theme: getStoredTheme(),
+            exportedAt: new Date().toISOString() 
+        };
+        const jsonString = JSON.stringify(backupData, null, 2);
+        const blob = new Blob([jsonString], { type: 'application/json' });
+        const metadata = { name: 'cjaynotes_backup.json', parents: [folderId] };
+        const form = new FormData();
+        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+        form.append('file', blob);
+        const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+            method: 'POST',
+            headers: { 'Authorization': 'Bearer ' + token },
+            body: form
+        });
+        if (!response.ok) {
+            if (response.status === 401) { saveGoogleToken(''); updateDriveButtons(false); setDriveStatus('❌ Token expired. Reconnect.', 'disconnected'); showToast('Token expired.'); return; }
+            throw new Error('Upload failed (HTTP ' + response.status + ')');
+        }
+        setLastSyncTime();
+        setDriveStatus('✅ Push successful! ' + noteCount + ' notes backed up.', 'connected');
+        showToast('Notes pushed to Drive!');
+        updateSyncInfo();
+    } catch (err) {
+        console.error('Push error:', err);
+        setDriveStatus('❌ Push failed: ' + err.message, 'disconnected');
+        showToast('Push failed.');
+    }
+}
+
+async function pullFromDrive() {
+    const token = loadGoogleToken();
+    if (!token) { showToast('Please connect to Google Drive first.'); return; }
+    setDriveStatus('📥 Pulling...', 'pending');
+    try {
+        const folderId = await getOrCreateDriveFolder(token);
+        const searchRes = await fetch(
+            `https://www.googleapis.com/drive/v3/files?q=name='cjaynotes_backup.json' and '${folderId}' in parents and trashed=false`,
+            { headers: { 'Authorization': 'Bearer ' + token } }
+        );
+        const searchData = await searchRes.json();
+        if (!searchData.files || searchData.files.length === 0) {
+            setDriveStatus('ℹ️ No backup found. Push data first.', '');
+            showToast('No backup found.');
+            return;
+        }
+        const fileId = searchData.files[0].id;
+        const fileModified = searchData.files[0].modifiedTime;
+        const downloadRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+            headers: { 'Authorization': 'Bearer ' + token }
+        });
+        if (!downloadRes.ok) throw new Error('Download failed (HTTP ' + downloadRes.status + ')');
+        const jsonString = await downloadRes.text();
+        const backupData = JSON.parse(jsonString);
+        if (!backupData.data || !backupData.data.notes) throw new Error('Invalid backup format.');
+        const noteCount = Object.keys(backupData.data.notes).length;
+        if (!confirm(`Replace all current notes with Drive backup?\n\nBackup contains:\n• ${noteCount} notes\n• ${Object.keys(backupData.data.folders || {}).length} folders\n• Last modified: ${new Date(fileModified).toLocaleString()}\n\nContinue?`)) {
+            setDriveStatus('Pull cancelled.', '');
+            return;
+        }
+        data = backupData.data;
+        if (backupData.theme) applyTheme(backupData.theme);
+        saveData();
+        renderNotes();
+        renderFolders();
+        updateStats();
+        setLastSyncTime();
+        setDriveStatus('✅ Pull successful! Imported ' + noteCount + ' notes.', 'connected');
+        showToast('✅ Imported ' + noteCount + ' notes from Drive!');
+        updateSyncInfo();
+    } catch (err) {
+        console.error('Pull error:', err);
+        setDriveStatus('❌ Pull failed: ' + err.message, 'disconnected');
+        showToast('Pull failed.');
+    }
+}
+
+// ============================================================
+// BACKUP (JSON)
+// ============================================================
+function exportBackup() {
+    closeFab();
+    const backupData = { 
+        data: data, 
+        theme: getStoredTheme(),
+        exportedAt: new Date().toISOString() 
+    };
+    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = `cjaynotes_backup_${new Date().toISOString().slice(0,10)}.json`;
+    a.click();
+    URL.revokeObjectURL(url);
+    showToast('Backup exported!');
+}
+
+function importBackup() {
+    closeFab();
+    document.getElementById('backupInput').click();
+}
+
+document.getElementById('backupInput').addEventListener('change', function(e) {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = function(event) {
+        try {
+            const backupData = JSON.parse(event.target.result);
+            if (!backupData.data || !backupData.data.notes) { showToast('Invalid backup file!'); return; }
+            const noteCount = Object.keys(backupData.data.notes).length;
+            if (!confirm(`Replace all current notes with backup?\n\nBackup contains:\n• ${noteCount} notes\n• ${Object.keys(backupData.data.folders || {}).length} folders\n\nContinue?`)) return;
+            data = backupData.data;
+            if (backupData.theme) applyTheme(backupData.theme);
+            saveData();
+            renderNotes();
+            renderFolders();
+            updateStats();
+            showToast(`✅ Restored ${noteCount} notes from backup!`);
+        } catch (err) {
+            showToast('❌ Error: Invalid backup file');
+            console.error(err);
+        }
+    };
+    reader.readAsText(file);
+    this.value = '';
+});
+
+// ============================================================
+// RESET ALL DATA
+// ============================================================
+function resetAllData() {
+    if (!confirm('Delete ALL notes and folders?')) return;
+    data = getDefaultData();
+    saveData();
+    renderNotes();
+    renderFolders();
+    updateStats();
+    showToast('All data cleared.');
+}
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showScreen(screen) {
+    document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
+    const target = document.getElementById('screen-' + screen);
+    if (target) target.classList.add('active');
+    if (screen === 'home') {
+        renderNotes();
+        updateStats();
+    }
+    if (screen === 'settings') {
+        renderFolders();
+        loadSettings();
+    }
+}
+
+function loadSettings() {
+    const clientId = loadGoogleClientId();
+    if (clientId) document.getElementById('googleClientId').value = clientId;
+    const token = loadGoogleToken();
+    if (token) {
+        updateDriveButtons(true);
+        setDriveStatus('✅ Connected to Google Drive', 'connected');
+    } else {
+        updateDriveButtons(false);
+        setDriveStatus('ℹ️ Not connected. Click "Connect".', '');
+    }
+    updateSyncInfo();
+}
+
+// ============================================================
+// EVENT BINDING
+// ============================================================
+function bindEvents() {
+    // Top bar
+    document.getElementById('searchToggle').addEventListener('click', function() {
+        const bar = document.getElementById('searchBar');
+        bar.classList.toggle('hidden');
+        if (!bar.classList.contains('hidden')) {
+            document.getElementById('searchInput').focus();
+        } else {
+            searchQuery = '';
+            document.getElementById('searchInput').value = '';
+            renderNotes();
+            updateStats();
+        }
+    });
+    document.getElementById('themeBtn').addEventListener('click', toggleTheme);
+    document.getElementById('homeBtn').addEventListener('click', function() { 
+        currentNoteId = null;
+        showScreen('home'); 
+    });
+    document.getElementById('settingsBtn').addEventListener('click', function() { showScreen('settings'); });
+    
+    // Search
+    document.getElementById('searchInput').addEventListener('input', function() {
+        searchQuery = this.value.trim();
+        renderNotes();
+        updateStats();
+    });
+    document.getElementById('clearSearchBtn').addEventListener('click', function() {
+        document.getElementById('searchInput').value = '';
+        searchQuery = '';
+        renderNotes();
+        updateStats();
+    });
+    
+    // Filter buttons
+    document.querySelectorAll('.filter-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            currentFilter = this.dataset.filter;
+            renderNotes();
+            updateStats();
+        });
+    });
+    
+    // Editor
+    document.getElementById('backFromEditorBtn').addEventListener('click', function() {
+        saveCurrentNote();
+        currentNoteId = null;
+        showScreen('home');
+    });
+    document.getElementById('saveNoteBtn').addEventListener('click', function() {
+        saveCurrentNote();
+    });
+    
+    // Auto-save in editor
+    document.getElementById('noteTitle').addEventListener('input', saveCurrentNote);
+    document.getElementById('noteContent').addEventListener('input', saveCurrentNote);
+    document.getElementById('noteTags').addEventListener('input', saveCurrentNote);
+    document.getElementById('noteFolder').addEventListener('change', saveCurrentNote);
+    
+    // Fab
+    document.getElementById('fabButton').addEventListener('click', toggleFab);
+    document.getElementById('fabNewNote').addEventListener('click', function() {
+        closeFab();
+        const id = createNote();
+        openNote(id);
+    });
+    document.getElementById('fabNewFolder').addEventListener('click', function() {
+        closeFab();
+        const name = prompt('Enter folder name:');
+        if (name) createFolder(name);
+    });
+    document.getElementById('fabPushDrive').addEventListener('click', function() { closeFab(); pushToDrive(); });
+    document.getElementById('fabPullDrive').addEventListener('click', function() { closeFab(); pullFromDrive(); });
+    
+    // Settings
+    document.getElementById('addFolderBtn').addEventListener('click', function() {
+        const input = document.getElementById('newFolderInput');
+        createFolder(input.value);
+        input.value = '';
+    });
+    document.getElementById('newFolderInput').addEventListener('keydown', function(e) {
+        if (e.key === 'Enter') {
+            document.getElementById('addFolderBtn').click();
+        }
+    });
+    document.getElementById('googleClientId').addEventListener('change', saveGoogleClientId);
+    document.getElementById('connectDriveBtn').addEventListener('click', connectGoogleDrive);
+    document.getElementById('pushDriveBtn').addEventListener('click', pushToDrive);
+    document.getElementById('pullDriveBtn').addEventListener('click', pullFromDrive);
+    document.getElementById('exportBackupBtn').addEventListener('click', exportBackup);
+    document.getElementById('importBackupBtn').addEventListener('click', importBackup);
+    document.getElementById('resetAllBtn').addEventListener('click', resetAllData);
+    
+    // Modal overlay
+    document.getElementById('modalOverlay').addEventListener('click', function(e) {
+        if (e.target === this) this.classList.remove('active');
+    });
+    
+    // Collapsible groups
+    document.querySelectorAll('.group-header').forEach(header => {
+        header.addEventListener('click', function() { toggleGroup(this); });
+    });
+}
+
+// ============================================================
+// BOOT
+// ============================================================
+renderNotes();
+renderFolders();
+updateStats();
+bindEvents();
+
+// Expose functions to global
+window.openNote = openNote;
+window.deleteNote = deleteNote;
+window.toggleFavorite = toggleFavorite;
+window.toggleArchive = toggleArchive;
+window.createNote = createNote;
+window.createFolder = createFolder;
+window.showScreen = showScreen;
+window.toggleTheme = toggleTheme;
+window.toggleFab = toggleFab;
+window.closeFab = closeFab;
+window.connectGoogleDrive = connectGoogleDrive;
+window.pushToDrive = pushToDrive;
+window.pullFromDrive = pullFromDrive;
+window.exportBackup = exportBackup;
+window.importBackup = importBackup;
+window.resetAllData = resetAllData;
+window.saveCurrentNote = saveCurrentNote;
+</script>
+</body>
+</html>
