@@ -7,23 +7,16 @@ const TOKEN_KEY = 'cjaynotes_google_token';
 const SYNC_TIME_KEY = 'cjaynotes_last_sync';
 const SYNC_TOKEN_KEY = 'cjaynotes_sync_token';
 const PUSH_FLAG_KEY = 'cjaynotes_push_enabled';
-const PALETTE_KEY = 'cjaynotes_palette';
 const MODE_KEY = 'cjaynotes_mode';
 
 const WORKER_URL = 'https://cjay-cloud.monaplayzsbackup.workers.dev';
 const APP_ID = 'cjaynotes';
 const DEFAULT_SYNC_TOKEN = 'cjn_m5x9q3w7r2t6y8u4v1b5n9p4k8j3d7f2';
 
-// Palette definitions — accent color per palette (used for favicon generation)
-const PALETTES = {
-    teal:      { accent: '#14b8a6', accentOn: '#041a18' },
-    mint:      { accent: '#4ade80', accentOn: '#0a1a14' },
-    forest:    { accent: '#22c55e', accentOn: '#061a0f' },
-    deepgreen: { accent: '#34d399', accentOn: '#0a0f0d' }
-};
+const FOLDER_COLORS = ['#e07a3f', '#3b82f6', '#a855f7', '#10b981', '#ec4899', '#06b6d4', '#f59e0b', '#8b5cf6'];
 
-const ICON_SVG_MOON = '<svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
-const ICON_SVG_SUN = '<svg class="icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2"/><path d="M12 21v2"/><path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/><path d="M1 12h2"/><path d="M21 12h2"/><path d="M4.22 19.78l1.42-1.42"/><path d="M18.36 5.64l1.42-1.42"/></svg>';
+const ICON_MOON = '<svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
+const ICON_SUN = '<svg class="icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2"/><path d="M12 21v2"/><path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/><path d="M1 12h2"/><path d="M21 12h2"/><path d="M4.22 19.78l1.42-1.42"/><path d="M18.36 5.64l1.42-1.42"/></svg>';
 
 // ============================================================
 // STATE
@@ -81,18 +74,14 @@ function toWireFormat() {
     return {
         collections: { notes: Object.values(data.notes) },
         deletedIds: { notes: data.deletedIds || [] },
-        settings: {
-            palette: getStoredPalette(),
-            mode: getStoredMode()
-        }
+        settings: { mode: getStoredMode() }
     };
 }
 
 function fromWireFormat(wire) {
     const notesMap = {};
-    (wire.collections && wire.collections.notes ? wire.collections.notes : []).forEach(n => {
-        notesMap[n.id] = n;
-    });
+    const notesArr = wire.collections && wire.collections.notes ? wire.collections.notes : [];
+    notesArr.forEach(n => { notesMap[n.id] = n; });
     return {
         notes: notesMap,
         deletedIds: (wire.deletedIds && wire.deletedIds.notes) ? wire.deletedIds.notes : []
@@ -114,6 +103,15 @@ function getFolderNoteCount(folderName) {
     return Object.values(data.notes).filter(n => n.folder === folderName).length;
 }
 
+function getFolderColor(folderName) {
+    if (!folderName) return null;
+    let hash = 0;
+    for (let i = 0; i < folderName.length; i++) {
+        hash = (hash * 31 + folderName.charCodeAt(i)) >>> 0;
+    }
+    return FOLDER_COLORS[hash % FOLDER_COLORS.length];
+}
+
 // ============================================================
 // NOTES
 // ============================================================
@@ -127,29 +125,21 @@ function getNotesArray() {
 
 function getFilteredNotes() {
     let notes = getNotesArray();
+    if (currentFilter === 'favorites') notes = notes.filter(n => n.favorite);
+    else if (currentFilter === 'archived') notes = notes.filter(n => n.archived);
+    else notes = notes.filter(n => !n.archived);
 
-    if (currentFilter === 'favorites') {
-        notes = notes.filter(n => n.favorite);
-    } else if (currentFilter === 'archived') {
-        notes = notes.filter(n => n.archived);
-    } else {
-        notes = notes.filter(n => !n.archived);
-    }
-
-    if (currentFolderFilter) {
-        notes = notes.filter(n => n.folder === currentFolderFilter);
-    }
+    if (currentFolderFilter) notes = notes.filter(n => n.folder === currentFolderFilter);
 
     if (searchQuery) {
         const q = searchQuery.toLowerCase();
-        notes = notes.filter(n => {
-            return (n.title || '').toLowerCase().includes(q) ||
-                   (n.content || '').toLowerCase().includes(q) ||
-                   (n.tags || []).some(t => t.toLowerCase().includes(q)) ||
-                   (n.folder || '').toLowerCase().includes(q);
-        });
+        notes = notes.filter(n =>
+            (n.title || '').toLowerCase().includes(q) ||
+            (n.content || '').toLowerCase().includes(q) ||
+            (n.tags || []).some(t => t.toLowerCase().includes(q)) ||
+            (n.folder || '').toLowerCase().includes(q)
+        );
     }
-
     return notes;
 }
 
@@ -157,15 +147,9 @@ function createNote(title = '', content = '') {
     const id = generateId();
     const now = new Date().toISOString();
     data.notes[id] = {
-        id: id,
-        title: title || 'Untitled',
-        content: content,
-        tags: [],
-        folder: '',
-        favorite: false,
-        archived: false,
-        createdAt: now,
-        updatedAt: now
+        id, title: title || 'Untitled', content,
+        tags: [], folder: '', favorite: false, archived: false,
+        createdAt: now, updatedAt: now
     };
     saveData();
     return id;
@@ -186,9 +170,7 @@ function deleteNote(id) {
     if (pendingDelete.timer) clearTimeout(pendingDelete.timer);
     pendingDelete.timer = setTimeout(() => {
         toast.classList.remove('show');
-        if (!data.deletedIds.includes(id)) {
-            data.deletedIds.push(id);
-        }
+        if (!data.deletedIds.includes(id)) data.deletedIds.push(id);
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
         scheduleSyncToWorker();
         pendingDelete = null;
@@ -202,14 +184,11 @@ function deleteNote(id) {
 
 function undoDelete() {
     if (!pendingDelete) return;
-    const toast = document.getElementById('undoToast');
-    toast.classList.remove('show');
-
+    document.getElementById('undoToast').classList.remove('show');
     const { note, id } = pendingDelete;
     data.notes[id] = note;
     data.deletedIds = (data.deletedIds || []).filter(x => x !== id);
     saveData();
-
     clearTimeout(pendingDelete.timer);
     pendingDelete = null;
     showToast('Note restored');
@@ -247,7 +226,9 @@ function openNote(id) {
     document.getElementById('noteContent').value = note.content || '';
     document.getElementById('noteTags').value = (note.tags || []).join(', ');
     document.getElementById('noteFolder').value = note.folder || '';
-    document.getElementById('noteLastEdited').textContent = 'Last edited: ' + new Date(note.updatedAt).toLocaleString();
+    document.getElementById('noteLastEdited').textContent = new Date(note.updatedAt).toLocaleString(undefined, {
+        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
+    });
 
     refreshFolderOptions();
     showScreen('editor');
@@ -283,36 +264,23 @@ function refreshFolderOptions() {
 // ============================================================
 // THEME
 // ============================================================
-function getStoredPalette() {
-    return localStorage.getItem(PALETTE_KEY) || 'teal';
-}
 function getStoredMode() {
     return localStorage.getItem(MODE_KEY) || 'dark';
 }
 
 function applyTheme() {
-    const palette = getStoredPalette();
     const mode = getStoredMode();
-
-    document.documentElement.setAttribute('data-palette', palette);
     document.documentElement.setAttribute('data-mode', mode);
 
-    // Top bar theme button icon
     const btn = document.getElementById('themeBtn');
-    if (btn) btn.innerHTML = mode === 'dark' ? ICON_SVG_MOON : ICON_SVG_SUN;
+    if (btn) btn.innerHTML = mode === 'dark' ? ICON_MOON : ICON_SUN;
 
-    // Update the browser tab icon
-    updateFavicon(PALETTES[palette] ? PALETTES[palette].accent : PALETTES.teal.accent);
+    // Update theme-color meta
+    const meta = document.querySelector('meta[name="theme-color"]');
+    if (meta) meta.setAttribute('content', mode === 'dark' ? '#16181d' : '#faf6f2');
 
-    // Update settings UI if loaded
+    updateFavicon(mode);
     updateAppearanceUI();
-}
-
-function setPalette(palette) {
-    if (!PALETTES[palette]) palette = 'teal';
-    localStorage.setItem(PALETTE_KEY, palette);
-    applyTheme();
-    scheduleSyncToWorker();
 }
 
 function setMode(mode) {
@@ -326,13 +294,15 @@ function toggleMode() {
     setMode(getStoredMode() === 'dark' ? 'light' : 'dark');
 }
 
-function updateFavicon(accentColor) {
+function updateFavicon(mode) {
+    const accent = mode === 'dark' ? '#e07a3f' : '#9a3412';
+    const on = mode === 'dark' ? '#16181d' : '#ffffff';
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-        <rect width="512" height="512" rx="112" fill="${accentColor}"/>
-        <rect x="128" y="128" width="256" height="256" rx="28" fill="none" stroke="#0a1a12" stroke-width="24"/>
-        <line x1="176" y1="208" x2="336" y2="208" stroke="#0a1a12" stroke-width="20" stroke-linecap="round"/>
-        <line x1="176" y1="256" x2="336" y2="256" stroke="#0a1a12" stroke-width="20" stroke-linecap="round"/>
-        <line x1="176" y1="304" x2="288" y2="304" stroke="#0a1a12" stroke-width="20" stroke-linecap="round"/>
+        <rect width="512" height="512" rx="112" fill="${accent}"/>
+        <rect x="128" y="128" width="256" height="256" rx="28" fill="none" stroke="${on}" stroke-width="24"/>
+        <line x1="176" y1="208" x2="336" y2="208" stroke="${on}" stroke-width="20" stroke-linecap="round"/>
+        <line x1="176" y1="256" x2="336" y2="256" stroke="${on}" stroke-width="20" stroke-linecap="round"/>
+        <line x1="176" y1="304" x2="288" y2="304" stroke="${on}" stroke-width="20" stroke-linecap="round"/>
     </svg>`;
     const dataUri = 'data:image/svg+xml;base64,' + btoa(svg);
     document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(el => {
@@ -341,14 +311,9 @@ function updateFavicon(accentColor) {
 }
 
 function updateAppearanceUI() {
-    const palette = getStoredPalette();
     const mode = getStoredMode();
-
     document.querySelectorAll('#modeToggle button').forEach(b => {
         b.classList.toggle('active', b.dataset.modeValue === mode);
-    });
-    document.querySelectorAll('#palettePicker button').forEach(b => {
-        b.classList.toggle('active', b.dataset.paletteValue === palette);
     });
 }
 
@@ -362,7 +327,7 @@ function showToast(msg) {
     el.textContent = msg;
     el.classList.add('show');
     clearTimeout(toastTimeout);
-    toastTimeout = setTimeout(() => el.classList.remove('show'), 2500);
+    toastTimeout = setTimeout(() => el.classList.remove('show'), 2200);
 }
 
 function openModal(title, sub, inputPlaceholder, confirmText, callback) {
@@ -389,13 +354,11 @@ function openModal(title, sub, inputPlaceholder, confirmText, callback) {
     document.getElementById('modalCancelBtn').addEventListener('click', () => {
         overlay.classList.remove('active');
     });
-
     document.getElementById('modalConfirmBtn').addEventListener('click', () => {
         const value = document.getElementById('modalInput').value.trim();
         overlay.classList.remove('active');
         if (value && callback) callback(value);
     });
-
     document.getElementById('modalInput').addEventListener('keydown', (e) => {
         if (e.key === 'Enter') document.getElementById('modalConfirmBtn').click();
     });
@@ -413,13 +376,11 @@ function openConfirm(title, sub, confirmText, callback, danger) {
             <button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" id="modalConfirmBtn">${escapeHtml(confirmText)}</button>
         </div>
     `;
-
     overlay.classList.add('active');
 
     document.getElementById('modalCancelBtn').addEventListener('click', () => {
         overlay.classList.remove('active');
     });
-
     document.getElementById('modalConfirmBtn').addEventListener('click', () => {
         overlay.classList.remove('active');
         if (callback) callback();
@@ -443,9 +404,9 @@ function showScreen(screen) {
     document.querySelectorAll('.screen').forEach(el => el.classList.remove('active'));
     const target = document.getElementById('screen-' + screen);
     if (target) target.classList.add('active');
-    if (screen === 'home') { renderNotes(); updateStats(); }
-    if (screen === 'settings') { loadSettings(); }
-    if (screen === 'folders') { renderFoldersScreen(); }
+    if (screen === 'home') { renderNotes(); renderFolderPills(); updateStats(); }
+    if (screen === 'settings') loadSettings();
+    if (screen === 'folders') renderFoldersScreen();
 }
 
 // ============================================================
@@ -456,45 +417,43 @@ function renderNotes() {
     const notes = getFilteredNotes();
 
     if (notes.length === 0) {
-        const msg = searchQuery ? 'No notes match your search.' : 'No notes yet. Tap "+" to create one.';
+        const msg = searchQuery ? 'No notes match your search.' : 'No notes yet.';
         container.innerHTML = `
             <div class="empty-state">
-                <svg class="icon-svg" viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="12" y2="12"/></svg>
+                <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/></svg>
                 <p>${msg}</p>
             </div>
         `;
         return;
     }
 
-    container.innerHTML = notes.map(n => {
-        const preview = (n.content || '').slice(0, 100) + ((n.content || '').length > 100 ? '...' : '');
-        const tags = (n.tags || []).slice(0, 3);
-        const extraTags = (n.tags || []).length > 3 ? '+' + ((n.tags || []).length - 3) : '';
-        const date = new Date(n.updatedAt || n.createdAt);
-        const timeAgo = getTimeAgo(date);
-        const isFavorite = n.favorite;
+    container.innerHTML = notes.map((n, idx) => {
+        const preview = (n.content || '').replace(/\n/g, ' ').slice(0, 90);
+        const folderColor = n.folder ? getFolderColor(n.folder) : null;
+        const stripe = folderColor || 'var(--accent)';
+        const timeAgo = getTimeAgo(new Date(n.updatedAt || n.createdAt));
+        const tags = (n.tags || []).slice(0, 2);
 
         return `
-            <div class="note-card" data-id="${n.id}">
-                <div class="info" data-action="open" data-id="${n.id}">
-                    <div class="title">${escapeHtml(n.title) || 'Untitled'}</div>
-                    <div class="preview">${escapeHtml(preview) || 'Empty note'}</div>
-                    <div class="meta">
-                        ${n.folder ? `<span class="folder-tag">${escapeHtml(n.folder)}</span>` : ''}
-                        ${tags.map(t => `<span class="tag">#${escapeHtml(t)}</span>`).join('')}
-                        ${extraTags ? `<span class="tag">${escapeHtml(extraTags)}</span>` : ''}
-                        <span class="date">${timeAgo}</span>
+            <div class="note-row" data-id="${n.id}" style="--row-stripe: ${stripe}; animation-delay: ${Math.min(idx, 8) * 15}ms;">
+                <div class="note-row-body" data-action="open" data-id="${n.id}">
+                    <div class="note-row-title">${escapeHtml(n.title) || 'Untitled'}</div>
+                    ${preview ? `<div class="note-row-excerpt">${escapeHtml(preview)}</div>` : ''}
+                    <div class="note-row-meta">
+                        ${n.folder ? `<span class="folder-name">${escapeHtml(n.folder)}</span><span class="sep">·</span>` : ''}
+                        <span>${timeAgo}</span>
+                        ${tags.length ? `<span class="sep">·</span>${tags.map(t => `<span class="tag-inline">#${escapeHtml(t)}</span>`).join('')}` : ''}
                     </div>
                 </div>
-                <div class="actions">
-                    <button class="icon-btn-sm" data-action="favorite" data-id="${n.id}" title="Favorite">
-                        <svg class="icon-svg ${isFavorite ? 'star-filled' : 'star-empty'}" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                <div class="note-row-actions">
+                    <button class="note-action ${n.favorite ? 'is-starred' : ''}" data-action="favorite" data-id="${n.id}" aria-label="Star">
+                        <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
                     </button>
-                    <button class="icon-btn-sm" data-action="archive" data-id="${n.id}" title="Archive">
-                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
+                    <button class="note-action" data-action="archive" data-id="${n.id}" aria-label="Archive">
+                        <svg viewBox="0 0 24 24"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
                     </button>
-                    <button class="icon-btn-sm danger" data-action="delete" data-id="${n.id}" title="Delete">
-                        <svg class="icon-svg" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                    <button class="note-action danger" data-action="delete" data-id="${n.id}" aria-label="Delete">
+                        <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
                     </button>
                 </div>
             </div>
@@ -505,34 +464,58 @@ function renderNotes() {
         el.addEventListener('click', function() { openNote(this.dataset.id); });
     });
     container.querySelectorAll('[data-action="favorite"]').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            toggleFavorite(this.dataset.id);
-        });
+        btn.addEventListener('click', function(e) { e.stopPropagation(); toggleFavorite(this.dataset.id); });
     });
     container.querySelectorAll('[data-action="archive"]').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            toggleArchive(this.dataset.id);
-        });
+        btn.addEventListener('click', function(e) { e.stopPropagation(); toggleArchive(this.dataset.id); });
     });
     container.querySelectorAll('[data-action="delete"]').forEach(btn => {
-        btn.addEventListener('click', function(e) {
-            e.stopPropagation();
-            deleteNote(this.dataset.id);
+        btn.addEventListener('click', function(e) { e.stopPropagation(); deleteNote(this.dataset.id); });
+    });
+}
+
+function renderFolderPills() {
+    const row = document.getElementById('folderPillsRow');
+    const folders = getDerivedFolders();
+
+    if (folders.length === 0) {
+        row.classList.add('hidden');
+        row.innerHTML = '';
+        return;
+    }
+
+    row.classList.remove('hidden');
+    row.innerHTML = folders.map(f => {
+        const active = currentFolderFilter === f;
+        const color = getFolderColor(f);
+        return `
+            <button class="folder-pill ${active ? 'active' : ''}" data-folder="${escapeHtml(f)}">
+                <span class="dot" style="background: ${active ? 'var(--accent-on)' : color}"></span>
+                ${escapeHtml(f)}
+            </button>
+        `;
+    }).join('');
+
+    row.querySelectorAll('.folder-pill').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const f = this.dataset.folder;
+            if (currentFolderFilter === f) currentFolderFilter = null;
+            else currentFolderFilter = f;
+            renderFolderPills();
+            renderNotes();
+            updateStats();
         });
     });
 }
 
 function getTimeAgo(date) {
-    const now = new Date();
-    const diff = now - date;
-    if (diff < 60000) return 'Just now';
-    if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
-    if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
-    if (diff < 172800000) return 'Yesterday';
-    if (diff < 604800000) return Math.floor(diff / 86400000) + 'd ago';
-    return date.toLocaleDateString();
+    const diff = Date.now() - date.getTime();
+    if (diff < 60000) return 'just now';
+    if (diff < 3600000) return Math.floor(diff / 60000) + 'm';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + 'h';
+    if (diff < 172800000) return 'yesterday';
+    if (diff < 604800000) return Math.floor(diff / 86400000) + 'd';
+    return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
 function updateStats() {
@@ -540,25 +523,28 @@ function updateStats() {
     const total = allNotes.length;
     const favorites = allNotes.filter(n => n.favorite).length;
     const archived = allNotes.filter(n => n.archived).length;
-    const tags = new Set();
-    allNotes.forEach(n => (n.tags || []).forEach(t => tags.add(t)));
     const folders = getDerivedFolders().length;
+    const lastSync = getLastSyncTime();
 
-    document.getElementById('statNotes').textContent = total;
-    document.getElementById('statTags').textContent = tags.size;
-    document.getElementById('statFolders').textContent = folders;
     document.getElementById('countAll').textContent = total - archived;
     document.getElementById('countFavorites').textContent = favorites;
     document.getElementById('countArchived').textContent = archived;
 
-    const filterEl = document.getElementById('activeFolderFilter');
-    const filterText = document.getElementById('activeFolderFilterText');
-    if (currentFolderFilter) {
-        filterEl.classList.remove('hidden');
-        filterText.textContent = 'Folder: ' + currentFolderFilter;
+    // Brand meta
+    const metaParts = [];
+    metaParts.push(total + (total === 1 ? ' note' : ' notes'));
+    if (folders > 0) metaParts.push(folders + (folders === 1 ? ' folder' : ' folders'));
+    if (lastSync) {
+        const t = new Date(lastSync);
+        const diff = Date.now() - t.getTime();
+        if (diff < 60000) metaParts.push('synced');
+        else if (diff < 3600000) metaParts.push('synced ' + Math.floor(diff/60000) + 'm');
+        else if (diff < 86400000) metaParts.push('synced ' + Math.floor(diff/3600000) + 'h');
+        else metaParts.push('synced ' + Math.floor(diff/86400000) + 'd');
     } else {
-        filterEl.classList.add('hidden');
+        metaParts.push('not synced');
     }
+    document.getElementById('brandMeta').textContent = metaParts.join(' · ');
 }
 
 // ============================================================
@@ -568,26 +554,33 @@ function renderFoldersScreen() {
     const container = document.getElementById('foldersScreenList');
     if (!container) return;
     const folders = getDerivedFolders();
+
     if (folders.length === 0) {
-        container.innerHTML = '<p class="text-muted">No folders yet. Folders are created automatically when you assign one to a note.</p>';
+        container.innerHTML = '<p class="text-muted" style="margin-top:12px;">No folders yet. Folders are created automatically when you assign a name to a note.</p>';
         return;
     }
-    container.innerHTML = folders.map(f => `
-        <div class="folder-item" data-folder="${escapeHtml(f)}">
-            <div class="folder-info" data-action="filter" data-folder="${escapeHtml(f)}" style="flex:1;">
-                <div class="folder-name">${escapeHtml(f)}</div>
-                <div class="folder-count">${getFolderNoteCount(f)} note${getFolderNoteCount(f) > 1 ? 's' : ''}</div>
+
+    container.innerHTML = folders.map(f => {
+        const count = getFolderNoteCount(f);
+        const color = getFolderColor(f);
+        return `
+            <div class="folder-list-item" style="--folder-color: ${color};">
+                <div class="folder-item-body" data-action="filter" data-folder="${escapeHtml(f)}">
+                    <div class="folder-item-name">${escapeHtml(f)}</div>
+                    <div class="folder-item-count">${count} note${count === 1 ? '' : 's'}</div>
+                </div>
+                <button class="folder-item-delete" data-action="delete" data-folder="${escapeHtml(f)}" aria-label="Remove folder">
+                    <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
+                </button>
             </div>
-            <button class="folder-delete" data-action="delete" data-folder="${escapeHtml(f)}" title="Remove folder">
-                <svg class="icon-svg sm" viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
-            </button>
-        </div>
-    `).join('');
+        `;
+    }).join('');
 
     container.querySelectorAll('[data-action="filter"]').forEach(el => {
         el.addEventListener('click', function() {
             currentFolderFilter = this.dataset.folder;
             showScreen('home');
+            renderFolderPills();
             renderNotes();
             updateStats();
         });
@@ -599,7 +592,7 @@ function renderFoldersScreen() {
             const folderName = this.dataset.folder;
             openConfirm(
                 'Remove folder?',
-                `Remove folder "${folderName}"? Notes in it will move to "No folder".`,
+                `Notes in "${folderName}" will move to No folder.`,
                 'Remove',
                 function() {
                     const now = new Date().toISOString();
@@ -612,6 +605,7 @@ function renderFoldersScreen() {
                     if (currentFolderFilter === folderName) currentFolderFilter = null;
                     saveData();
                     renderFoldersScreen();
+                    renderFolderPills();
                     showToast('Folder removed');
                 },
                 true
@@ -659,21 +653,13 @@ async function syncToWorker() {
         data.deletedIds = merged.deletedIds;
         localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
 
-        // Apply remote palette/mode if provided
-        if (result.settings) {
-            let changed = false;
-            if (result.settings.palette && PALETTES[result.settings.palette] && result.settings.palette !== getStoredPalette()) {
-                localStorage.setItem(PALETTE_KEY, result.settings.palette);
-                changed = true;
-            }
-            if (result.settings.mode && result.settings.mode !== getStoredMode()) {
-                localStorage.setItem(MODE_KEY, result.settings.mode);
-                changed = true;
-            }
-            if (changed) applyTheme();
+        if (result.settings && result.settings.mode && result.settings.mode !== getStoredMode()) {
+            localStorage.setItem(MODE_KEY, result.settings.mode);
+            applyTheme();
         }
 
         renderNotes();
+        renderFolderPills();
         updateStats();
         setLastSyncTime();
         syncingFromWorker = false;
@@ -681,7 +667,7 @@ async function syncToWorker() {
         const afterCount = Object.keys(data.notes).length;
         const incoming = Math.max(0, afterCount - beforeCount);
         setSyncStatus('Synced · ' + afterCount + ' notes', 'ok');
-        if (incoming > 0) showToast(`${incoming} new note${incoming > 1 ? 's' : ''} synced ✨`);
+        if (incoming > 0) showToast(`${incoming} new note${incoming === 1 ? '' : 's'} synced`);
     } catch (err) {
         console.error('[sync] Error:', err);
         syncingFromWorker = false;
@@ -694,19 +680,15 @@ function setSyncStatus(msg, type) {
     if (el) {
         el.textContent = msg;
         el.style.color = type === 'error' ? 'var(--danger)' :
-                         type === 'ok' ? 'var(--accent)' :
+                         type === 'ok' ? 'var(--success)' :
                          type === 'loading' ? 'var(--text-secondary)' : '';
-    }
-    const statEl = document.getElementById('syncStatusText');
-    if (statEl) {
-        const t = getLastSyncTime();
-        statEl.textContent = t ? new Date(t).toLocaleDateString() : 'Not synced';
     }
 }
 
 function setLastSyncTime() {
     localStorage.setItem(SYNC_TIME_KEY, new Date().toISOString());
     updateSyncInfo();
+    updateStats();
 }
 
 function getLastSyncTime() {
@@ -717,13 +699,7 @@ function updateSyncInfo() {
     const el = document.getElementById('syncInfo');
     if (!el) return;
     const time = getLastSyncTime();
-    if (time) {
-        el.textContent = 'Last synced: ' + new Date(time).toLocaleString();
-        document.getElementById('syncStatusText').textContent = new Date(time).toLocaleDateString();
-    } else {
-        el.textContent = 'Not synced yet. Push or pull data.';
-        document.getElementById('syncStatusText').textContent = 'Not synced';
-    }
+    el.textContent = time ? 'Last synced: ' + new Date(time).toLocaleString() : 'Not synced yet.';
 }
 
 // ============================================================
@@ -748,7 +724,7 @@ function updatePushUI() {
 
 async function enablePush() {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
-        showToast('Push not supported on this device');
+        showToast('Push not supported');
         return;
     }
     try {
@@ -757,7 +733,6 @@ async function enablePush() {
         const reg = await navigator.serviceWorker.ready;
         const vapidRes = await fetch(`${WORKER_URL}/v1/push/${APP_ID}/vapid-key`);
         const { key } = await vapidRes.json();
-
         let sub = await reg.pushManager.getSubscription();
         if (!sub) {
             sub = await reg.pushManager.subscribe({
@@ -765,19 +740,17 @@ async function enablePush() {
                 applicationServerKey: urlBase64ToUint8Array(key)
             });
         }
-
         await fetch(`${WORKER_URL}/v1/push/${APP_ID}/subscribe`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ subscription: sub })
         });
-
         localStorage.setItem(PUSH_FLAG_KEY, '1');
         updatePushUI();
-        showToast('Push notifications enabled');
+        showToast('Notifications enabled');
     } catch (err) {
         console.error('Push enable error:', err);
-        showToast('Failed to enable push: ' + err.message);
+        showToast('Failed: ' + err.message);
     }
 }
 
@@ -795,10 +768,10 @@ async function disablePush() {
         }
         localStorage.removeItem(PUSH_FLAG_KEY);
         updatePushUI();
-        showToast('Push notifications disabled');
+        showToast('Notifications disabled');
     } catch (err) {
         console.error('Push disable error:', err);
-        showToast('Failed to disable push: ' + err.message);
+        showToast('Failed: ' + err.message);
     }
 }
 
@@ -806,14 +779,11 @@ async function disablePush() {
 // GOOGLE DRIVE
 // ============================================================
 function saveGoogleClientId() {
-    const clientId = document.getElementById('googleClientId').value.trim();
-    if (clientId) {
-        localStorage.setItem(CLIENT_ID_KEY, clientId);
-        showToast('Client ID saved!');
-    }
+    const v = document.getElementById('googleClientId').value.trim();
+    if (v) { localStorage.setItem(CLIENT_ID_KEY, v); showToast('Client ID saved'); }
 }
 function loadGoogleClientId() { return localStorage.getItem(CLIENT_ID_KEY) || ''; }
-function saveGoogleToken(token) { localStorage.setItem(TOKEN_KEY, token); }
+function saveGoogleToken(t) { localStorage.setItem(TOKEN_KEY, t); }
 function loadGoogleToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
 
 function setDriveStatus(msg, type) {
@@ -823,28 +793,28 @@ function setDriveStatus(msg, type) {
 }
 
 function updateDriveButtons(connected) {
-    const pushBtn = document.getElementById('pushDriveBtn');
-    const pullBtn = document.getElementById('pullDriveBtn');
-    const connectBtn = document.getElementById('connectDriveBtn');
-    if (pushBtn) pushBtn.disabled = !connected;
-    if (pullBtn) pullBtn.disabled = !connected;
-    if (connectBtn) {
-        connectBtn.textContent = connected ? '✅ Connected' : 'Connect';
-        connectBtn.className = connected ? 'btn btn-success btn-sm' : 'btn btn-primary btn-sm';
+    const p = document.getElementById('pushDriveBtn');
+    const l = document.getElementById('pullDriveBtn');
+    const c = document.getElementById('connectDriveBtn');
+    if (p) p.disabled = !connected;
+    if (l) l.disabled = !connected;
+    if (c) {
+        c.textContent = connected ? 'Connected' : 'Connect';
+        c.className = connected ? 'btn btn-neutral btn-sm' : 'btn btn-primary btn-sm';
     }
 }
 
 function connectGoogleDrive() {
     const clientId = document.getElementById('googleClientId').value.trim() || loadGoogleClientId();
-    if (!clientId) { showToast('Please enter your Google Client ID first.'); return; }
+    if (!clientId) { showToast('Enter client ID first'); return; }
     localStorage.setItem(CLIENT_ID_KEY, clientId);
     if (typeof google === 'undefined') {
         const script = document.createElement('script');
         script.src = 'https://accounts.google.com/gsi/client';
-        script.onload = function() { initGoogleDrive(); };
-        script.onerror = function() { showToast('Failed to load Google library.'); };
+        script.onload = () => initGoogleDrive();
+        script.onerror = () => showToast('Failed to load Google');
         document.head.appendChild(script);
-    } else { initGoogleDrive(); }
+    } else initGoogleDrive();
 }
 
 function initGoogleDrive() {
@@ -854,71 +824,64 @@ function initGoogleDrive() {
         tokenClient = google.accounts.oauth2.initTokenClient({
             client_id: clientId,
             scope: 'https://www.googleapis.com/auth/drive.file',
-            callback: function(tokenResponse) {
+            callback: (tokenResponse) => {
                 if (tokenResponse.access_token) {
                     saveGoogleToken(tokenResponse.access_token);
-                    setDriveStatus('✅ Connected to Google Drive', 'connected');
+                    setDriveStatus('Connected to Google Drive', 'connected');
                     updateDriveButtons(true);
-                    showToast('Google Drive connected!');
+                    showToast('Drive connected');
                 } else {
-                    setDriveStatus('❌ Connection failed', 'disconnected');
+                    setDriveStatus('Connection failed', 'disconnected');
                     updateDriveButtons(false);
                 }
             },
         });
         tokenClient.requestAccessToken();
     } catch (err) {
-        setDriveStatus('❌ Error: ' + err.message, 'disconnected');
+        setDriveStatus('Error: ' + err.message, 'disconnected');
         updateDriveButtons(false);
     }
 }
 
-function handleDriveAuthError(response) {
-    if (response.status === 401) {
+function handleDriveAuthError(res) {
+    if (res.status === 401) {
         saveGoogleToken('');
         updateDriveButtons(false);
-        setDriveStatus('❌ Token expired. Reconnect.', 'disconnected');
-        showToast('Token expired.');
+        setDriveStatus('Token expired. Reconnect.', 'disconnected');
         return true;
     }
     return false;
 }
 
 async function getOrCreateDriveFolder(token) {
-    const searchRes = await fetch(
+    const s = await fetch(
         "https://www.googleapis.com/drive/v3/files?q=name='CjayNotes' and mimeType='application/vnd.google-apps.folder' and trashed=false",
         { headers: { 'Authorization': 'Bearer ' + token } }
     );
-    if (!searchRes.ok) {
-        if (handleDriveAuthError(searchRes)) throw new Error('__auth_handled__');
-        throw new Error('Folder lookup failed (HTTP ' + searchRes.status + ')');
-    }
-    const searchData = await searchRes.json();
-    if (searchData.files && searchData.files.length > 0) return searchData.files[0].id;
-    const createRes = await fetch('https://www.googleapis.com/drive/v3/files', {
+    if (!s.ok) { if (handleDriveAuthError(s)) throw new Error('__auth__'); throw new Error('Folder lookup failed'); }
+    const sd = await s.json();
+    if (sd.files && sd.files.length > 0) return sd.files[0].id;
+    const c = await fetch('https://www.googleapis.com/drive/v3/files', {
         method: 'POST',
         headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' },
         body: JSON.stringify({ name: 'CjayNotes', mimeType: 'application/vnd.google-apps.folder' })
     });
-    if (!createRes.ok) {
-        if (handleDriveAuthError(createRes)) throw new Error('__auth_handled__');
-        throw new Error('Folder creation failed (HTTP ' + createRes.status + ')');
-    }
-    const createData = await createRes.json();
-    return createData.id;
+    if (!c.ok) { if (handleDriveAuthError(c)) throw new Error('__auth__'); throw new Error('Folder creation failed'); }
+    const cd = await c.json();
+    return cd.id;
 }
 
 async function deleteOldBackups(token, folderId, excludeId) {
-    const searchRes = await fetch(
+    const s = await fetch(
         `https://www.googleapis.com/drive/v3/files?q=name='cjaynotes_backup.json' and '${folderId}' in parents and trashed=false`,
         { headers: { 'Authorization': 'Bearer ' + token } }
     );
-    if (!searchRes.ok) return;
-    const searchData = await searchRes.json();
-    if (searchData.files) {
-        for (const file of searchData.files) {
-            if (file.id === excludeId) continue;
-            await fetch(`https://www.googleapis.com/drive/v3/files/${file.id}`, {
+    if (!s.ok) return;
+    const sd = await s.json();
+    if (sd.files) {
+        for (const f of sd.files) {
+            if (f.id === excludeId) continue;
+            await fetch(`https://www.googleapis.com/drive/v3/files/${f.id}`, {
                 method: 'DELETE',
                 headers: { 'Authorization': 'Bearer ' + token }
             });
@@ -928,96 +891,88 @@ async function deleteOldBackups(token, folderId, excludeId) {
 
 async function pushToDrive() {
     const token = loadGoogleToken();
-    if (!token) { showToast('Please connect to Google Drive first.'); return; }
+    if (!token) { showToast('Connect Drive first'); return; }
     const noteCount = Object.keys(data.notes).length;
-    if (noteCount === 0) { showToast('No notes to push.'); return; }
-    setDriveStatus('📤 Pushing...', 'pending');
+    if (noteCount === 0) { showToast('No notes to push'); return; }
+    setDriveStatus('Pushing...', 'pending');
     try {
         const folderId = await getOrCreateDriveFolder(token);
-        const backupData = {
+        const backup = {
             data: data,
-            palette: getStoredPalette(),
             mode: getStoredMode(),
             exportedAt: new Date().toISOString()
         };
-        const jsonString = JSON.stringify(backupData, null, 2);
+        const jsonString = JSON.stringify(backup, null, 2);
         const blob = new Blob([jsonString], { type: 'application/json' });
-        const metadata = { name: 'cjaynotes_backup.json', parents: [folderId] };
         const form = new FormData();
-        form.append('metadata', new Blob([JSON.stringify(metadata)], { type: 'application/json' }));
+        form.append('metadata', new Blob([JSON.stringify({ name: 'cjaynotes_backup.json', parents: [folderId] })], { type: 'application/json' }));
         form.append('file', blob);
-        const response = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
+        const r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
             method: 'POST',
             headers: { 'Authorization': 'Bearer ' + token },
             body: form
         });
-        if (!response.ok) {
-            if (handleDriveAuthError(response)) return;
-            throw new Error('Upload failed (HTTP ' + response.status + ')');
-        }
-        const newFile = await response.json();
+        if (!r.ok) { if (handleDriveAuthError(r)) return; throw new Error('Upload failed'); }
+        const newFile = await r.json();
         await deleteOldBackups(token, folderId, newFile.id);
-        setDriveStatus('✅ Push successful! ' + noteCount + ' notes backed up.', 'connected');
-        showToast('Notes pushed to Drive!');
+        setDriveStatus('Pushed ' + noteCount + ' notes', 'connected');
+        showToast('Pushed to Drive');
     } catch (err) {
-        if (err.message === '__auth_handled__') return;
-        setDriveStatus('❌ Push failed: ' + err.message, 'disconnected');
-        showToast('Push failed.');
+        if (err.message === '__auth__') return;
+        setDriveStatus('Push failed: ' + err.message, 'disconnected');
+        showToast('Push failed');
     }
 }
 
 async function pullFromDrive() {
     const token = loadGoogleToken();
-    if (!token) { showToast('Please connect to Google Drive first.'); return; }
-    setDriveStatus('📥 Pulling...', 'pending');
+    if (!token) { showToast('Connect Drive first'); return; }
+    setDriveStatus('Pulling...', 'pending');
     try {
         const folderId = await getOrCreateDriveFolder(token);
-        const searchRes = await fetch(
+        const s = await fetch(
             `https://www.googleapis.com/drive/v3/files?q=name='cjaynotes_backup.json' and '${folderId}' in parents and trashed=false`,
             { headers: { 'Authorization': 'Bearer ' + token } }
         );
-        const searchData = await searchRes.json();
-        if (!searchData.files || searchData.files.length === 0) {
-            setDriveStatus('ℹ️ No backup found. Push data first.', '');
-            showToast('No backup found.');
+        const sd = await s.json();
+        if (!sd.files || sd.files.length === 0) {
+            setDriveStatus('No backup found', '');
+            showToast('No backup found');
             return;
         }
-        const fileId = searchData.files[0].id;
-        const fileModified = searchData.files[0].modifiedTime;
-        const downloadRes = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
+        const fileId = sd.files[0].id;
+        const fileModified = sd.files[0].modifiedTime;
+        const d = await fetch(`https://www.googleapis.com/drive/v3/files/${fileId}?alt=media`, {
             headers: { 'Authorization': 'Bearer ' + token }
         });
-        if (!downloadRes.ok) {
-            if (handleDriveAuthError(downloadRes)) return;
-            throw new Error('Download failed (HTTP ' + downloadRes.status + ')');
-        }
-        const jsonString = await downloadRes.text();
-        const backupData = JSON.parse(jsonString);
-        if (!backupData.data || !backupData.data.notes) throw new Error('Invalid backup format.');
-        const noteCount = Object.keys(backupData.data.notes).length;
+        if (!d.ok) { if (handleDriveAuthError(d)) return; throw new Error('Download failed'); }
+        const jsonString = await d.text();
+        const backup = JSON.parse(jsonString);
+        if (!backup.data || !backup.data.notes) throw new Error('Invalid backup');
+        const noteCount = Object.keys(backup.data.notes).length;
         setDriveStatus('Awaiting confirmation...', 'pending');
         openConfirm(
             'Replace all notes?',
-            `Drive backup contains ${noteCount} notes, last modified ${new Date(fileModified).toLocaleString()}. This will replace everything currently in the app.`,
+            `Backup has ${noteCount} notes from ${new Date(fileModified).toLocaleString()}. This replaces everything currently in the app.`,
             'Restore',
             function() {
-                data = backupData.data;
+                data = backup.data;
                 if (!data.deletedIds) data.deletedIds = [];
-                if (backupData.palette && PALETTES[backupData.palette]) localStorage.setItem(PALETTE_KEY, backupData.palette);
-                if (backupData.mode) localStorage.setItem(MODE_KEY, backupData.mode);
+                if (backup.mode) localStorage.setItem(MODE_KEY, backup.mode);
                 applyTheme();
                 saveData();
                 renderNotes();
+                renderFolderPills();
                 updateStats();
-                setDriveStatus('✅ Pull successful! Imported ' + noteCount + ' notes.', 'connected');
-                showToast('✅ Imported ' + noteCount + ' notes from Drive!');
+                setDriveStatus('Imported ' + noteCount + ' notes', 'connected');
+                showToast('Imported from Drive');
             },
             true
         );
     } catch (err) {
-        if (err.message === '__auth_handled__') return;
-        setDriveStatus('❌ Pull failed: ' + err.message, 'disconnected');
-        showToast('Pull failed.');
+        if (err.message === '__auth__') return;
+        setDriveStatus('Pull failed: ' + err.message, 'disconnected');
+        showToast('Pull failed');
     }
 }
 
@@ -1025,20 +980,15 @@ async function pullFromDrive() {
 // JSON BACKUP
 // ============================================================
 function exportBackup() {
-    const backupData = {
-        data: data,
-        palette: getStoredPalette(),
-        mode: getStoredMode(),
-        exportedAt: new Date().toISOString()
-    };
-    const blob = new Blob([JSON.stringify(backupData, null, 2)], { type: 'application/json' });
+    const backup = { data: data, mode: getStoredMode(), exportedAt: new Date().toISOString() };
+    const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
     a.download = `cjaynotes_backup_${new Date().toISOString().slice(0,10)}.json`;
     a.click();
     URL.revokeObjectURL(url);
-    showToast('Backup exported!');
+    showToast('Exported');
 }
 
 function importBackup() {
@@ -1051,14 +1001,15 @@ function importBackup() {
 function resetAllData() {
     openConfirm(
         'Reset all data?',
-        'Delete ALL notes and folders? This cannot be undone.',
+        'Delete all notes and folders? This cannot be undone.',
         'Delete everything',
         function() {
             data = getDefaultData();
             saveData();
             renderNotes();
+            renderFolderPills();
             updateStats();
-            showToast('All data cleared.');
+            showToast('All data cleared');
         },
         true
     );
@@ -1071,13 +1022,8 @@ function loadSettings() {
     const clientId = loadGoogleClientId();
     if (clientId) document.getElementById('googleClientId').value = clientId;
     const token = loadGoogleToken();
-    if (token) {
-        updateDriveButtons(true);
-        setDriveStatus('✅ Connected to Google Drive', 'connected');
-    } else {
-        updateDriveButtons(false);
-        setDriveStatus('ℹ️ Not connected. Click "Connect".', '');
-    }
+    if (token) { updateDriveButtons(true); setDriveStatus('Connected to Google Drive', 'connected'); }
+    else { updateDriveButtons(false); setDriveStatus('Not connected', ''); }
     updateSyncInfo();
 
     const syncTokenInput = document.getElementById('syncToken');
@@ -1106,17 +1052,14 @@ async function loadAppVersion() {
 // EVENT BINDING
 // ============================================================
 function bindEvents() {
-    // Undo
     document.getElementById('undoBtn').addEventListener('click', undoDelete);
 
-    // Brand → home
     document.getElementById('brandBtn').addEventListener('click', function() {
         currentNoteId = null;
         currentFolderFilter = null;
         showScreen('home');
     });
 
-    // Top bar theme quick toggle
     document.getElementById('themeBtn').addEventListener('click', toggleMode);
 
     // Hamburger
@@ -1164,14 +1107,7 @@ function bindEvents() {
         updateStats();
     });
 
-    // Clear folder filter
-    document.getElementById('clearFolderFilterBtn').addEventListener('click', function() {
-        currentFolderFilter = null;
-        renderNotes();
-        updateStats();
-    });
-
-    // Filter buttons
+    // Filters
     document.querySelectorAll('.filter-btn').forEach(btn => {
         btn.addEventListener('click', function() {
             document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
@@ -1190,7 +1126,7 @@ function bindEvents() {
     });
     document.getElementById('saveNoteBtn').addEventListener('click', function() {
         saveCurrentNote();
-        showToast('Note saved!');
+        showToast('Saved');
     });
     document.getElementById('noteTitle').addEventListener('input', saveCurrentNote);
     document.getElementById('noteContent').addEventListener('input', saveCurrentNote);
@@ -1203,32 +1139,20 @@ function bindEvents() {
         openNote(id);
     });
 
-    // Appearance — mode toggle
+    // Mode
     document.querySelectorAll('#modeToggle button').forEach(btn => {
-        btn.addEventListener('click', function() {
-            setMode(this.dataset.modeValue);
-        });
-    });
-
-    // Appearance — palette picker
-    document.querySelectorAll('#palettePicker button').forEach(btn => {
-        btn.addEventListener('click', function() {
-            setPalette(this.dataset.paletteValue);
-        });
+        btn.addEventListener('click', function() { setMode(this.dataset.modeValue); });
     });
 
     // Sync
     const syncTokenInput = document.getElementById('syncToken');
     if (syncTokenInput) {
         syncTokenInput.addEventListener('change', function() {
-            const val = this.value.trim();
-            if (val) {
-                localStorage.setItem(SYNC_TOKEN_KEY, val);
-                showToast('Sync token saved');
-            }
+            const v = this.value.trim();
+            if (v) { localStorage.setItem(SYNC_TOKEN_KEY, v); showToast('Sync token saved'); }
         });
     }
-    document.getElementById('syncNowBtn').addEventListener('click', function() { syncToWorker(); });
+    document.getElementById('syncNowBtn').addEventListener('click', () => syncToWorker());
     document.getElementById('enablePushBtn').addEventListener('click', function() {
         if (localStorage.getItem(PUSH_FLAG_KEY) === '1') disablePush();
         else enablePush();
@@ -1251,35 +1175,35 @@ function bindEvents() {
         const reader = new FileReader();
         reader.onload = function(event) {
             try {
-                const backupData = JSON.parse(event.target.result);
-                if (!backupData.data || !backupData.data.notes) { showToast('Invalid backup file!'); return; }
-                const noteCount = Object.keys(backupData.data.notes).length;
+                const backup = JSON.parse(event.target.result);
+                if (!backup.data || !backup.data.notes) { showToast('Invalid backup'); return; }
+                const noteCount = Object.keys(backup.data.notes).length;
                 openConfirm(
                     'Replace all notes?',
-                    `Backup contains ${noteCount} notes. This will replace everything currently in the app.`,
+                    `Backup has ${noteCount} notes. This replaces everything currently in the app.`,
                     'Restore',
                     function() {
-                        data = backupData.data;
+                        data = backup.data;
                         if (!data.deletedIds) data.deletedIds = [];
-                        if (backupData.palette && PALETTES[backupData.palette]) localStorage.setItem(PALETTE_KEY, backupData.palette);
-                        if (backupData.mode) localStorage.setItem(MODE_KEY, backupData.mode);
+                        if (backup.mode) localStorage.setItem(MODE_KEY, backup.mode);
                         applyTheme();
                         saveData();
                         renderNotes();
+                        renderFolderPills();
                         updateStats();
-                        showToast(`✅ Restored ${noteCount} notes from backup!`);
+                        showToast('Restored ' + noteCount + ' notes');
                     },
                     true
                 );
             } catch (err) {
-                showToast('❌ Error: Invalid backup file');
+                showToast('Invalid backup file');
             }
         };
         reader.readAsText(file);
         this.value = '';
     });
 
-    // Modal overlay click
+    // Modal overlay
     document.getElementById('modalOverlay').addEventListener('click', function(e) {
         if (e.target === this) closeModal();
     });
@@ -1312,7 +1236,7 @@ function bindEvents() {
         }
     });
 
-    // Update toast button
+    // Update refresh
     const refreshBtn = document.getElementById('updateRefreshBtn');
     if (refreshBtn) {
         refreshBtn.addEventListener('click', function() {
@@ -1365,9 +1289,7 @@ if ('serviceWorker' in navigator) {
 // VISIBILITY SYNC
 // ============================================================
 document.addEventListener('visibilitychange', function() {
-    if (document.visibilityState === 'visible') {
-        syncToWorker();
-    }
+    if (document.visibilityState === 'visible') syncToWorker();
 });
 
 // ============================================================
@@ -1375,8 +1297,9 @@ document.addEventListener('visibilitychange', function() {
 // ============================================================
 applyTheme();
 renderNotes();
+renderFolderPills();
 updateStats();
 bindEvents();
 updateOnlineStatus();
 
-setTimeout(() => { syncToWorker(); }, 500);
+setTimeout(() => syncToWorker(), 500);
