@@ -1,7 +1,7 @@
 // ============================================================
 // CjayNotes Service Worker
 // ============================================================
-const CACHE_VERSION = 'cjaynotes-v1.0.0';
+const CACHE_VERSION = 'cjaynotes-v1.0.1';
 
 const APP_SHELL = [
     './',
