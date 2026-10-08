@@ -1,7 +1,4 @@
-// ============================================================
-// CjayNotes Service Worker
-// ============================================================
-const CACHE_VERSION = 'cjaynotes-v1.0.1';
+const CACHE_VERSION = 'cjaynotes-v1.2.0';
 
 const APP_SHELL = [
     './',
@@ -12,18 +9,12 @@ const APP_SHELL = [
     './icon.svg'
 ];
 
-// ============================================================
-// INSTALL
-// ============================================================
 self.addEventListener('install', event => {
     event.waitUntil(
         caches.open(CACHE_VERSION).then(cache => cache.addAll(APP_SHELL))
     );
 });
 
-// ============================================================
-// ACTIVATE
-// ============================================================
 self.addEventListener('activate', event => {
     event.waitUntil(
         caches.keys().then(keys => Promise.all(
@@ -32,32 +23,21 @@ self.addEventListener('activate', event => {
     );
 });
 
-// ============================================================
-// MESSAGE (skip waiting from update toast)
-// ============================================================
 self.addEventListener('message', event => {
-    if (event.data && event.data.type === 'SKIP_WAITING') {
-        self.skipWaiting();
-    }
+    if (event.data && event.data.type === 'SKIP_WAITING') self.skipWaiting();
 });
 
-// ============================================================
-// FETCH
-// ============================================================
 self.addEventListener('fetch', event => {
     const req = event.request;
     if (req.method !== 'GET') return;
-
     const url = new URL(req.url);
 
-    // Network-only: Google APIs + Cjay Cloud worker
     if (url.hostname.includes('googleapis.com') ||
         url.hostname.includes('accounts.google.com') ||
         url.hostname.includes('cjay-cloud.monaplayzsbackup.workers.dev')) {
         return;
     }
 
-    // Cache-first: fonts
     if (url.hostname.includes('fonts.googleapis.com') ||
         url.hostname.includes('fonts.gstatic.com')) {
         event.respondWith(
@@ -73,7 +53,6 @@ self.addEventListener('fetch', event => {
         return;
     }
 
-    // Stale-while-revalidate: app files
     if (url.origin === self.location.origin) {
         event.respondWith(
             caches.match(req).then(cached => {
@@ -88,9 +67,6 @@ self.addEventListener('fetch', event => {
     }
 });
 
-// ============================================================
-// PUSH
-// ============================================================
 self.addEventListener('push', event => {
     let payload = { title: 'CjayNotes', body: 'You have a new update' };
     try {
@@ -108,9 +84,6 @@ self.addEventListener('push', event => {
     );
 });
 
-// ============================================================
-// NOTIFICATION CLICK
-// ============================================================
 self.addEventListener('notificationclick', event => {
     event.notification.close();
     const targetUrl = (event.notification.data && event.notification.data.url) || './';
