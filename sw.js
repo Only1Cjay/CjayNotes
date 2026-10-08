@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'cjaynotes-v1.2.0';
+const CACHE_VERSION = 'cjaynotes-v1.3.0';
 
 const APP_SHELL = [
     './',
@@ -10,9 +10,7 @@ const APP_SHELL = [
 ];
 
 self.addEventListener('install', event => {
-    event.waitUntil(
-        caches.open(CACHE_VERSION).then(cache => cache.addAll(APP_SHELL))
-    );
+    event.waitUntil(caches.open(CACHE_VERSION).then(c => c.addAll(APP_SHELL)));
 });
 
 self.addEventListener('activate', event => {
@@ -72,7 +70,6 @@ self.addEventListener('push', event => {
     try {
         if (event.data) payload = event.data.json();
     } catch (e) {}
-
     event.waitUntil(
         self.registration.showNotification(payload.title || 'CjayNotes', {
             body: payload.body || '',
