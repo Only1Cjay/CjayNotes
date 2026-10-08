@@ -1,0 +1,25 @@
+{
+    "name": "CjayNotes",
+    "short_name": "CjayNotes",
+    "description": "A lightweight note-taking app with sync",
+    "start_url": "./",
+    "scope": "./",
+    "display": "standalone",
+    "background_color": "#041a18",
+    "theme_color": "#14b8a6",
+    "orientation": "portrait",
+    "icons": [
+        {
+            "src": "icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "any"
+        },
+        {
+            "src": "icon.svg",
+            "sizes": "any",
+            "type": "image/svg+xml",
+            "purpose": "maskable"
+        }
+    ]
+}
