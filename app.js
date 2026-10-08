@@ -13,10 +13,7 @@ const WORKER_URL = 'https://cjay-cloud.monaplayzsbackup.workers.dev';
 const APP_ID = 'cjaynotes';
 const DEFAULT_SYNC_TOKEN = 'cjn_m5x9q3w7r2t6y8u4v1b5n9p4k8j3d7f2';
 
-const FOLDER_COLORS = ['#e07a3f', '#3b82f6', '#a855f7', '#10b981', '#ec4899', '#06b6d4', '#f59e0b', '#8b5cf6'];
-
-const ICON_MOON = '<svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 12.79A9 9 0 1 1 11.21 3 7 7 0 0 0 21 12.79z"/></svg>';
-const ICON_SUN = '<svg class="icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="5"/><path d="M12 1v2"/><path d="M12 21v2"/><path d="M4.22 4.22l1.42 1.42"/><path d="M18.36 18.36l1.42 1.42"/><path d="M1 12h2"/><path d="M21 12h2"/><path d="M4.22 19.78l1.42-1.42"/><path d="M18.36 5.64l1.42-1.42"/></svg>';
+const ICON_CONTRAST = '<svg class="icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M12 3a9 9 0 010 18z" fill="currentColor"/></svg>';
 
 // ============================================================
 // STATE
@@ -79,12 +76,12 @@ function toWireFormat() {
 }
 
 function fromWireFormat(wire) {
-    const notesMap = {};
-    const notesArr = wire.collections && wire.collections.notes ? wire.collections.notes : [];
-    notesArr.forEach(n => { notesMap[n.id] = n; });
+    const map = {};
+    const arr = (wire.collections && wire.collections.notes) || [];
+    arr.forEach(n => { map[n.id] = n; });
     return {
-        notes: notesMap,
-        deletedIds: (wire.deletedIds && wire.deletedIds.notes) ? wire.deletedIds.notes : []
+        notes: map,
+        deletedIds: (wire.deletedIds && wire.deletedIds.notes) || []
     };
 }
 
@@ -101,15 +98,6 @@ function getDerivedFolders() {
 
 function getFolderNoteCount(folderName) {
     return Object.values(data.notes).filter(n => n.folder === folderName).length;
-}
-
-function getFolderColor(folderName) {
-    if (!folderName) return null;
-    let hash = 0;
-    for (let i = 0; i < folderName.length; i++) {
-        hash = (hash * 31 + folderName.charCodeAt(i)) >>> 0;
-    }
-    return FOLDER_COLORS[hash % FOLDER_COLORS.length];
 }
 
 // ============================================================
@@ -143,11 +131,11 @@ function getFilteredNotes() {
     return notes;
 }
 
-function createNote(title = '', content = '') {
+function createNote() {
     const id = generateId();
     const now = new Date().toISOString();
     data.notes[id] = {
-        id, title: title || 'Untitled', content,
+        id, title: '', content: '',
         tags: [], folder: '', favorite: false, archived: false,
         createdAt: now, updatedAt: now
     };
@@ -226,12 +214,27 @@ function openNote(id) {
     document.getElementById('noteContent').value = note.content || '';
     document.getElementById('noteTags').value = (note.tags || []).join(', ');
     document.getElementById('noteFolder').value = note.folder || '';
-    document.getElementById('noteLastEdited').textContent = new Date(note.updatedAt).toLocaleString(undefined, {
-        month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit'
-    });
+    document.getElementById('noteLastEdited').textContent = formatEdited(note.updatedAt);
 
+    updateNoteMenuLabels(note);
     refreshFolderOptions();
     showScreen('editor');
+}
+
+function updateNoteMenuLabels(note) {
+    const starLabel = document.getElementById('noteMenuStarLabel');
+    const archiveLabel = document.getElementById('noteMenuArchiveLabel');
+    if (starLabel) starLabel.textContent = note.favorite ? 'Unstar note' : 'Star note';
+    if (archiveLabel) archiveLabel.textContent = note.archived ? 'Unarchive' : 'Archive';
+}
+
+function formatEdited(iso) {
+    if (!iso) return 'Just now';
+    const d = new Date(iso);
+    return d.toLocaleString(undefined, {
+        month: 'short', day: 'numeric',
+        hour: '2-digit', minute: '2-digit'
+    });
 }
 
 function saveCurrentNote() {
@@ -239,13 +242,13 @@ function saveCurrentNote() {
     const note = data.notes[currentNoteId];
     if (!note) return;
 
-    const title = document.getElementById('noteTitle').value.trim();
+    const title = document.getElementById('noteTitle').value;
     const content = document.getElementById('noteContent').value;
     const tagsRaw = document.getElementById('noteTags').value.trim();
     const tags = tagsRaw ? tagsRaw.split(',').map(t => t.trim()).filter(t => t) : [];
     const folder = document.getElementById('noteFolder').value.trim();
 
-    note.title = title || 'Untitled';
+    note.title = title;
     note.content = content;
     note.tags = tags;
     note.folder = folder;
@@ -273,14 +276,12 @@ function applyTheme() {
     document.documentElement.setAttribute('data-mode', mode);
 
     const btn = document.getElementById('themeBtn');
-    if (btn) btn.innerHTML = mode === 'dark' ? ICON_MOON : ICON_SUN;
+    if (btn) btn.innerHTML = ICON_CONTRAST;
 
-    // Update theme-color meta
     const meta = document.querySelector('meta[name="theme-color"]');
-    if (meta) meta.setAttribute('content', mode === 'dark' ? '#16181d' : '#faf6f2');
+    if (meta) meta.setAttribute('content', mode === 'dark' ? '#17140e' : '#fbf7eb');
 
     updateFavicon(mode);
-    updateAppearanceUI();
 }
 
 function setMode(mode) {
@@ -295,8 +296,8 @@ function toggleMode() {
 }
 
 function updateFavicon(mode) {
-    const accent = mode === 'dark' ? '#e07a3f' : '#9a3412';
-    const on = mode === 'dark' ? '#16181d' : '#ffffff';
+    const accent = mode === 'dark' ? '#ddb35c' : '#7d5a18';
+    const on = mode === 'dark' ? '#17140e' : '#ffffff';
     const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
         <rect width="512" height="512" rx="112" fill="${accent}"/>
         <rect x="128" y="128" width="256" height="256" rx="28" fill="none" stroke="${on}" stroke-width="24"/>
@@ -304,16 +305,9 @@ function updateFavicon(mode) {
         <line x1="176" y1="256" x2="336" y2="256" stroke="${on}" stroke-width="20" stroke-linecap="round"/>
         <line x1="176" y1="304" x2="288" y2="304" stroke="${on}" stroke-width="20" stroke-linecap="round"/>
     </svg>`;
-    const dataUri = 'data:image/svg+xml;base64,' + btoa(svg);
+    const uri = 'data:image/svg+xml;base64,' + btoa(svg);
     document.querySelectorAll('link[rel="icon"], link[rel="apple-touch-icon"]').forEach(el => {
-        el.href = dataUri;
-    });
-}
-
-function updateAppearanceUI() {
-    const mode = getStoredMode();
-    document.querySelectorAll('#modeToggle button').forEach(b => {
-        b.classList.toggle('active', b.dataset.modeValue === mode);
+        el.href = uri;
     });
 }
 
@@ -330,40 +324,6 @@ function showToast(msg) {
     toastTimeout = setTimeout(() => el.classList.remove('show'), 2200);
 }
 
-function openModal(title, sub, inputPlaceholder, confirmText, callback) {
-    const overlay = document.getElementById('modalOverlay');
-    const content = document.getElementById('modalContent');
-
-    content.innerHTML = `
-        <h2>${escapeHtml(title)}</h2>
-        <p class="sub">${escapeHtml(sub)}</p>
-        <label>Name</label>
-        <input id="modalInput" placeholder="${escapeHtml(inputPlaceholder)}" autofocus>
-        <div class="btn-row">
-            <button class="btn btn-neutral" id="modalCancelBtn">Cancel</button>
-            <button class="btn btn-primary" id="modalConfirmBtn">${escapeHtml(confirmText)}</button>
-        </div>
-    `;
-
-    overlay.classList.add('active');
-    setTimeout(() => {
-        const input = document.getElementById('modalInput');
-        if (input) input.focus();
-    }, 100);
-
-    document.getElementById('modalCancelBtn').addEventListener('click', () => {
-        overlay.classList.remove('active');
-    });
-    document.getElementById('modalConfirmBtn').addEventListener('click', () => {
-        const value = document.getElementById('modalInput').value.trim();
-        overlay.classList.remove('active');
-        if (value && callback) callback(value);
-    });
-    document.getElementById('modalInput').addEventListener('keydown', (e) => {
-        if (e.key === 'Enter') document.getElementById('modalConfirmBtn').click();
-    });
-}
-
 function openConfirm(title, sub, confirmText, callback, danger) {
     const overlay = document.getElementById('modalOverlay');
     const content = document.getElementById('modalContent');
@@ -372,7 +332,7 @@ function openConfirm(title, sub, confirmText, callback, danger) {
         <h2>${escapeHtml(title)}</h2>
         <p class="sub">${escapeHtml(sub)}</p>
         <div class="btn-row">
-            <button class="btn btn-neutral" id="modalCancelBtn">Cancel</button>
+            <button class="btn btn-outline" id="modalCancelBtn">Cancel</button>
             <button class="btn ${danger ? 'btn-danger' : 'btn-primary'}" id="modalConfirmBtn">${escapeHtml(confirmText)}</button>
         </div>
     `;
@@ -417,45 +377,37 @@ function renderNotes() {
     const notes = getFilteredNotes();
 
     if (notes.length === 0) {
-        const msg = searchQuery ? 'No notes match your search.' : 'No notes yet.';
+        const isSearch = !!searchQuery;
+        const isFolder = !!currentFolderFilter;
         container.innerHTML = `
             <div class="empty-state">
-                <svg viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><line x1="8" y1="9" x2="16" y2="9"/><line x1="8" y1="13" x2="14" y2="13"/></svg>
-                <p>${msg}</p>
+                <svg viewBox="0 0 24 24">${isSearch ? '<circle cx="11" cy="11" r="7"/><line x1="21" y1="21" x2="16.65" y2="16.65"/>' : '<rect x="5" y="3" width="14" height="18" rx="2"/><line x1="9" y1="8" x2="15" y2="8"/><line x1="9" y1="12" x2="15" y2="12"/><line x1="9" y1="16" x2="13" y2="16"/>'}</svg>
+                <h3>${isSearch ? 'No results' : isFolder ? 'No notes in this folder' : 'No notes yet'}</h3>
+                <p>${isSearch ? 'Try a different search term.' : isFolder ? 'Assign this folder to a note to see it here.' : 'Tap the pen to write your first note.'}</p>
             </div>
         `;
         return;
     }
 
     container.innerHTML = notes.map((n, idx) => {
-        const preview = (n.content || '').replace(/\n/g, ' ').slice(0, 90);
-        const folderColor = n.folder ? getFolderColor(n.folder) : null;
-        const stripe = folderColor || 'var(--accent)';
+        const preview = (n.content || '').replace(/\n/g, ' ').trim().slice(0, 100);
         const timeAgo = getTimeAgo(new Date(n.updatedAt || n.createdAt));
-        const tags = (n.tags || []).slice(0, 2);
+        const title = (n.title || '').trim() || 'Untitled';
+        const isStarred = !!n.favorite;
 
         return `
-            <div class="note-row" data-id="${n.id}" style="--row-stripe: ${stripe}; animation-delay: ${Math.min(idx, 8) * 15}ms;">
+            <div class="note-row" data-id="${n.id}" style="animation-delay:${Math.min(idx, 8) * 15}ms;">
                 <div class="note-row-body" data-action="open" data-id="${n.id}">
-                    <div class="note-row-title">${escapeHtml(n.title) || 'Untitled'}</div>
+                    <div class="note-row-title">${escapeHtml(title)}</div>
                     ${preview ? `<div class="note-row-excerpt">${escapeHtml(preview)}</div>` : ''}
                     <div class="note-row-meta">
-                        ${n.folder ? `<span class="folder-name">${escapeHtml(n.folder)}</span><span class="sep">·</span>` : ''}
+                        ${n.folder ? `<span class="folder">${escapeHtml(n.folder)}</span><span class="sep">·</span>` : ''}
                         <span>${timeAgo}</span>
-                        ${tags.length ? `<span class="sep">·</span>${tags.map(t => `<span class="tag-inline">#${escapeHtml(t)}</span>`).join('')}` : ''}
                     </div>
                 </div>
-                <div class="note-row-actions">
-                    <button class="note-action ${n.favorite ? 'is-starred' : ''}" data-action="favorite" data-id="${n.id}" aria-label="Star">
-                        <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-                    </button>
-                    <button class="note-action" data-action="archive" data-id="${n.id}" aria-label="Archive">
-                        <svg viewBox="0 0 24 24"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
-                    </button>
-                    <button class="note-action danger" data-action="delete" data-id="${n.id}" aria-label="Delete">
-                        <svg viewBox="0 0 24 24"><path d="M3 6h18"/><path d="M8 6V4a2 2 0 012-2h4a2 2 0 012 2v2"/><path d="M19 6l-1 14a2 2 0 01-2 2H8a2 2 0 01-2-2L5 6"/></svg>
-                    </button>
-                </div>
+                <button class="note-row-star ${isStarred ? 'is-starred' : ''}" data-action="star" data-id="${n.id}" aria-label="Star">
+                    <svg viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
+                </button>
             </div>
         `;
     }).join('');
@@ -463,14 +415,11 @@ function renderNotes() {
     container.querySelectorAll('[data-action="open"]').forEach(el => {
         el.addEventListener('click', function() { openNote(this.dataset.id); });
     });
-    container.querySelectorAll('[data-action="favorite"]').forEach(btn => {
-        btn.addEventListener('click', function(e) { e.stopPropagation(); toggleFavorite(this.dataset.id); });
-    });
-    container.querySelectorAll('[data-action="archive"]').forEach(btn => {
-        btn.addEventListener('click', function(e) { e.stopPropagation(); toggleArchive(this.dataset.id); });
-    });
-    container.querySelectorAll('[data-action="delete"]').forEach(btn => {
-        btn.addEventListener('click', function(e) { e.stopPropagation(); deleteNote(this.dataset.id); });
+    container.querySelectorAll('[data-action="star"]').forEach(btn => {
+        btn.addEventListener('click', function(e) {
+            e.stopPropagation();
+            toggleFavorite(this.dataset.id);
+        });
     });
 }
 
@@ -487,10 +436,9 @@ function renderFolderPills() {
     row.classList.remove('hidden');
     row.innerHTML = folders.map(f => {
         const active = currentFolderFilter === f;
-        const color = getFolderColor(f);
         return `
             <button class="folder-pill ${active ? 'active' : ''}" data-folder="${escapeHtml(f)}">
-                <span class="dot" style="background: ${active ? 'var(--accent-on)' : color}"></span>
+                <span class="dot"></span>
                 ${escapeHtml(f)}
             </button>
         `;
@@ -503,7 +451,6 @@ function renderFolderPills() {
             else currentFolderFilter = f;
             renderFolderPills();
             renderNotes();
-            updateStats();
         });
     });
 }
@@ -511,10 +458,10 @@ function renderFolderPills() {
 function getTimeAgo(date) {
     const diff = Date.now() - date.getTime();
     if (diff < 60000) return 'just now';
-    if (diff < 3600000) return Math.floor(diff / 60000) + 'm';
-    if (diff < 86400000) return Math.floor(diff / 3600000) + 'h';
+    if (diff < 3600000) return Math.floor(diff / 60000) + 'm ago';
+    if (diff < 86400000) return Math.floor(diff / 3600000) + 'h ago';
     if (diff < 172800000) return 'yesterday';
-    if (diff < 604800000) return Math.floor(diff / 86400000) + 'd';
+    if (diff < 604800000) return Math.floor(diff / 86400000) + 'd ago';
     return date.toLocaleDateString(undefined, { month: 'short', day: 'numeric' });
 }
 
@@ -524,27 +471,15 @@ function updateStats() {
     const favorites = allNotes.filter(n => n.favorite).length;
     const archived = allNotes.filter(n => n.archived).length;
     const folders = getDerivedFolders().length;
-    const lastSync = getLastSyncTime();
 
     document.getElementById('countAll').textContent = total - archived;
     document.getElementById('countFavorites').textContent = favorites;
     document.getElementById('countArchived').textContent = archived;
 
-    // Brand meta
-    const metaParts = [];
-    metaParts.push(total + (total === 1 ? ' note' : ' notes'));
-    if (folders > 0) metaParts.push(folders + (folders === 1 ? ' folder' : ' folders'));
-    if (lastSync) {
-        const t = new Date(lastSync);
-        const diff = Date.now() - t.getTime();
-        if (diff < 60000) metaParts.push('synced');
-        else if (diff < 3600000) metaParts.push('synced ' + Math.floor(diff/60000) + 'm');
-        else if (diff < 86400000) metaParts.push('synced ' + Math.floor(diff/3600000) + 'h');
-        else metaParts.push('synced ' + Math.floor(diff/86400000) + 'd');
-    } else {
-        metaParts.push('not synced');
-    }
-    document.getElementById('brandMeta').textContent = metaParts.join(' · ');
+    const parts = [];
+    parts.push(total + (total === 1 ? ' note' : ' notes'));
+    if (folders > 0) parts.push(folders + (folders === 1 ? ' folder' : ' folders'));
+    document.getElementById('brandMeta').textContent = parts.join(' · ');
 }
 
 // ============================================================
@@ -556,15 +491,20 @@ function renderFoldersScreen() {
     const folders = getDerivedFolders();
 
     if (folders.length === 0) {
-        container.innerHTML = '<p class="text-muted" style="margin-top:12px;">No folders yet. Folders are created automatically when you assign a name to a note.</p>';
+        container.innerHTML = `
+            <div class="empty-state">
+                <svg viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
+                <h3>No folders yet</h3>
+                <p>Folders appear here when you organize notes.</p>
+            </div>
+        `;
         return;
     }
 
     container.innerHTML = folders.map(f => {
         const count = getFolderNoteCount(f);
-        const color = getFolderColor(f);
         return `
-            <div class="folder-list-item" style="--folder-color: ${color};">
+            <div class="folder-list-item">
                 <div class="folder-item-body" data-action="filter" data-folder="${escapeHtml(f)}">
                     <div class="folder-item-name">${escapeHtml(f)}</div>
                     <div class="folder-item-count">${count} note${count === 1 ? '' : 's'}</div>
@@ -582,7 +522,6 @@ function renderFoldersScreen() {
             showScreen('home');
             renderFolderPills();
             renderNotes();
-            updateStats();
         });
     });
 
@@ -592,7 +531,7 @@ function renderFoldersScreen() {
             const folderName = this.dataset.folder;
             openConfirm(
                 'Remove folder?',
-                `Notes in "${folderName}" will move to No folder.`,
+                `Notes in "${folderName}" will move to no folder.`,
                 'Remove',
                 function() {
                     const now = new Date().toISOString();
@@ -680,15 +619,14 @@ function setSyncStatus(msg, type) {
     if (el) {
         el.textContent = msg;
         el.style.color = type === 'error' ? 'var(--danger)' :
-                         type === 'ok' ? 'var(--success)' :
-                         type === 'loading' ? 'var(--text-secondary)' : '';
+                         type === 'ok' ? 'var(--accent)' :
+                         type === 'loading' ? 'var(--text-2)' : '';
     }
 }
 
 function setLastSyncTime() {
     localStorage.setItem(SYNC_TIME_KEY, new Date().toISOString());
     updateSyncInfo();
-    updateStats();
 }
 
 function getLastSyncTime() {
@@ -718,8 +656,8 @@ function updatePushUI() {
     const enabled = localStorage.getItem(PUSH_FLAG_KEY) === '1';
     const btn = document.getElementById('enablePushBtn');
     const box = document.getElementById('pushStatusBox');
-    if (btn) btn.textContent = enabled ? 'Disable Notifications' : 'Enable Notifications';
-    if (box) box.textContent = 'Push: ' + (enabled ? 'enabled' : 'disabled');
+    if (btn) btn.textContent = enabled ? 'Disable notifications' : 'Enable notifications';
+    if (box) box.textContent = enabled ? 'Notifications on' : 'Notifications off';
 }
 
 async function enablePush() {
@@ -789,6 +727,7 @@ function loadGoogleToken() { return localStorage.getItem(TOKEN_KEY) || ''; }
 function setDriveStatus(msg, type) {
     const el = document.getElementById('driveStatus');
     if (!el) return;
+    if (!msg) { el.innerHTML = ''; return; }
     el.innerHTML = '<div class="drive-status ' + (type || '') + '">' + escapeHtml(msg) + '</div>';
 }
 
@@ -798,10 +737,7 @@ function updateDriveButtons(connected) {
     const c = document.getElementById('connectDriveBtn');
     if (p) p.disabled = !connected;
     if (l) l.disabled = !connected;
-    if (c) {
-        c.textContent = connected ? 'Connected' : 'Connect';
-        c.className = connected ? 'btn btn-neutral btn-sm' : 'btn btn-primary btn-sm';
-    }
+    if (c) c.textContent = connected ? 'Reconnect' : 'Connect';
 }
 
 function connectGoogleDrive() {
@@ -827,7 +763,7 @@ function initGoogleDrive() {
             callback: (tokenResponse) => {
                 if (tokenResponse.access_token) {
                     saveGoogleToken(tokenResponse.access_token);
-                    setDriveStatus('Connected to Google Drive', 'connected');
+                    setDriveStatus('Connected', 'connected');
                     updateDriveButtons(true);
                     showToast('Drive connected');
                 } else {
@@ -893,20 +829,14 @@ async function pushToDrive() {
     const token = loadGoogleToken();
     if (!token) { showToast('Connect Drive first'); return; }
     const noteCount = Object.keys(data.notes).length;
-    if (noteCount === 0) { showToast('No notes to push'); return; }
-    setDriveStatus('Pushing...', 'pending');
+    if (noteCount === 0) { showToast('No notes to back up'); return; }
+    setDriveStatus('Backing up...', 'pending');
     try {
         const folderId = await getOrCreateDriveFolder(token);
-        const backup = {
-            data: data,
-            mode: getStoredMode(),
-            exportedAt: new Date().toISOString()
-        };
-        const jsonString = JSON.stringify(backup, null, 2);
-        const blob = new Blob([jsonString], { type: 'application/json' });
+        const backup = { data, mode: getStoredMode(), exportedAt: new Date().toISOString() };
         const form = new FormData();
         form.append('metadata', new Blob([JSON.stringify({ name: 'cjaynotes_backup.json', parents: [folderId] })], { type: 'application/json' }));
-        form.append('file', blob);
+        form.append('file', new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' }));
         const r = await fetch('https://www.googleapis.com/upload/drive/v3/files?uploadType=multipart', {
             method: 'POST',
             headers: { 'Authorization': 'Bearer ' + token },
@@ -915,19 +845,19 @@ async function pushToDrive() {
         if (!r.ok) { if (handleDriveAuthError(r)) return; throw new Error('Upload failed'); }
         const newFile = await r.json();
         await deleteOldBackups(token, folderId, newFile.id);
-        setDriveStatus('Pushed ' + noteCount + ' notes', 'connected');
-        showToast('Pushed to Drive');
+        setDriveStatus('Backed up ' + noteCount + ' notes', 'connected');
+        showToast('Backed up to Drive');
     } catch (err) {
         if (err.message === '__auth__') return;
-        setDriveStatus('Push failed: ' + err.message, 'disconnected');
-        showToast('Push failed');
+        setDriveStatus('Backup failed', 'disconnected');
+        showToast('Backup failed');
     }
 }
 
 async function pullFromDrive() {
     const token = loadGoogleToken();
     if (!token) { showToast('Connect Drive first'); return; }
-    setDriveStatus('Pulling...', 'pending');
+    setDriveStatus('Restoring...', 'pending');
     try {
         const folderId = await getOrCreateDriveFolder(token);
         const s = await fetch(
@@ -952,8 +882,8 @@ async function pullFromDrive() {
         const noteCount = Object.keys(backup.data.notes).length;
         setDriveStatus('Awaiting confirmation...', 'pending');
         openConfirm(
-            'Replace all notes?',
-            `Backup has ${noteCount} notes from ${new Date(fileModified).toLocaleString()}. This replaces everything currently in the app.`,
+            'Restore from Drive?',
+            `This backup has ${noteCount} notes from ${new Date(fileModified).toLocaleString()}. It will replace everything currently in the app.`,
             'Restore',
             function() {
                 data = backup.data;
@@ -964,15 +894,15 @@ async function pullFromDrive() {
                 renderNotes();
                 renderFolderPills();
                 updateStats();
-                setDriveStatus('Imported ' + noteCount + ' notes', 'connected');
-                showToast('Imported from Drive');
+                setDriveStatus('Restored ' + noteCount + ' notes', 'connected');
+                showToast('Restored from Drive');
             },
             true
         );
     } catch (err) {
         if (err.message === '__auth__') return;
-        setDriveStatus('Pull failed: ' + err.message, 'disconnected');
-        showToast('Pull failed');
+        setDriveStatus('Restore failed', 'disconnected');
+        showToast('Restore failed');
     }
 }
 
@@ -980,7 +910,7 @@ async function pullFromDrive() {
 // JSON BACKUP
 // ============================================================
 function exportBackup() {
-    const backup = { data: data, mode: getStoredMode(), exportedAt: new Date().toISOString() };
+    const backup = { data, mode: getStoredMode(), exportedAt: new Date().toISOString() };
     const blob = new Blob([JSON.stringify(backup, null, 2)], { type: 'application/json' });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
@@ -1022,8 +952,8 @@ function loadSettings() {
     const clientId = loadGoogleClientId();
     if (clientId) document.getElementById('googleClientId').value = clientId;
     const token = loadGoogleToken();
-    if (token) { updateDriveButtons(true); setDriveStatus('Connected to Google Drive', 'connected'); }
-    else { updateDriveButtons(false); setDriveStatus('Not connected', ''); }
+    if (token) { updateDriveButtons(true); setDriveStatus('Connected', 'connected'); }
+    else { updateDriveButtons(false); setDriveStatus(''); }
     updateSyncInfo();
 
     const syncTokenInput = document.getElementById('syncToken');
@@ -1032,7 +962,6 @@ function loadSettings() {
     }
 
     updatePushUI();
-    updateAppearanceUI();
     loadAppVersion();
 }
 
@@ -1051,6 +980,12 @@ async function loadAppVersion() {
 // ============================================================
 // EVENT BINDING
 // ============================================================
+function closeAllPopups(except) {
+    document.querySelectorAll('.popup-menu').forEach(m => {
+        if (m !== except) m.classList.remove('open');
+    });
+}
+
 function bindEvents() {
     document.getElementById('undoBtn').addEventListener('click', undoDelete);
 
@@ -1067,14 +1002,16 @@ function bindEvents() {
     const menu = document.getElementById('hamburgerMenu');
     menuBtn.addEventListener('click', function(e) {
         e.stopPropagation();
-        menu.classList.toggle('open');
+        const isOpen = menu.classList.contains('open');
+        closeAllPopups();
+        if (!isOpen) menu.classList.add('open');
     });
     document.addEventListener('click', function(e) {
-        if (!menu.contains(e.target) && e.target !== menuBtn && !menuBtn.contains(e.target)) {
+        if (!menu.contains(e.target) && !menuBtn.contains(e.target)) {
             menu.classList.remove('open');
         }
     });
-    menu.querySelectorAll('.hamburger-item').forEach(item => {
+    menu.querySelectorAll('.popup-item').forEach(item => {
         item.addEventListener('click', function() {
             const action = this.dataset.menu;
             menu.classList.remove('open');
@@ -1094,23 +1031,53 @@ function bindEvents() {
         });
     });
 
+    // Note menu (in editor)
+    const noteMenuBtn = document.getElementById('noteMenuBtn');
+    const noteMenu = document.getElementById('noteMenu');
+    noteMenuBtn.addEventListener('click', function(e) {
+        e.stopPropagation();
+        const isOpen = noteMenu.classList.contains('open');
+        closeAllPopups();
+        if (!isOpen) noteMenu.classList.add('open');
+    });
+    document.addEventListener('click', function(e) {
+        if (!noteMenu.contains(e.target) && !noteMenuBtn.contains(e.target)) {
+            noteMenu.classList.remove('open');
+        }
+    });
+    noteMenu.querySelectorAll('.popup-item').forEach(item => {
+        item.addEventListener('click', function() {
+            const action = this.dataset.noteAction;
+            noteMenu.classList.remove('open');
+            if (!currentNoteId) return;
+            const note = data.notes[currentNoteId];
+            if (!note) return;
+            if (action === 'star') {
+                toggleFavorite(currentNoteId);
+                updateNoteMenuLabels(data.notes[currentNoteId]);
+            } else if (action === 'archive') {
+                toggleArchive(currentNoteId);
+            } else if (action === 'delete') {
+                deleteNote(currentNoteId);
+            }
+        });
+    });
+
     // Search
     document.getElementById('searchInput').addEventListener('input', function() {
         searchQuery = this.value.trim();
         renderNotes();
-        updateStats();
     });
     document.getElementById('clearSearchBtn').addEventListener('click', function() {
         document.getElementById('searchInput').value = '';
         searchQuery = '';
         renderNotes();
-        updateStats();
     });
 
     // Filters
-    document.querySelectorAll('.filter-btn').forEach(btn => {
+    document.querySelectorAll('.filter-pill').forEach(btn => {
         btn.addEventListener('click', function() {
-            document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+            document.querySelectorAll('.filter-pill').forEach(b => b.classList.remove('active'));
             this.classList.add('active');
             currentFilter = this.dataset.filter;
             renderNotes();
@@ -1137,11 +1104,10 @@ function bindEvents() {
     document.getElementById('fabButton').addEventListener('click', function() {
         const id = createNote();
         openNote(id);
-    });
-
-    // Mode
-    document.querySelectorAll('#modeToggle button').forEach(btn => {
-        btn.addEventListener('click', function() { setMode(this.dataset.modeValue); });
+        setTimeout(() => {
+            const titleInput = document.getElementById('noteTitle');
+            if (titleInput) titleInput.focus();
+        }, 100);
     });
 
     // Sync
@@ -1179,8 +1145,8 @@ function bindEvents() {
                 if (!backup.data || !backup.data.notes) { showToast('Invalid backup'); return; }
                 const noteCount = Object.keys(backup.data.notes).length;
                 openConfirm(
-                    'Replace all notes?',
-                    `Backup has ${noteCount} notes. This replaces everything currently in the app.`,
+                    'Restore from file?',
+                    `This backup has ${noteCount} notes. It will replace everything currently in the app.`,
                     'Restore',
                     function() {
                         data = backup.data;
@@ -1208,17 +1174,21 @@ function bindEvents() {
         if (e.target === this) closeModal();
     });
 
-    // Collapsible groups
+    // Collapsible settings groups
     document.querySelectorAll('.group-header').forEach(header => {
         header.addEventListener('click', function() {
+            const wrapper = this.closest('.settings-group');
             const content = this.nextElementSibling;
             const icon = this.querySelector('.toggle-icon');
-            if (content.classList.contains('open')) {
+            const isOpen = content.classList.contains('open');
+            if (isOpen) {
                 content.classList.remove('open');
                 icon.classList.remove('open');
+                wrapper.classList.remove('open');
             } else {
                 content.classList.add('open');
                 icon.classList.add('open');
+                wrapper.classList.add('open');
             }
         });
     });
@@ -1229,9 +1199,11 @@ function bindEvents() {
         const editor = document.querySelector('.editor-container');
         const backBtn = document.getElementById('backFromEditorBtn');
         const saveBtn = document.getElementById('saveNoteBtn');
+        const noteMenuBtnEl = document.getElementById('noteMenuBtn');
         if (editor && !editor.contains(e.target) &&
             e.target !== backBtn && !backBtn.contains(e.target) &&
-            e.target !== saveBtn && !saveBtn.contains(e.target)) {
+            e.target !== saveBtn && !saveBtn.contains(e.target) &&
+            e.target !== noteMenuBtnEl && !noteMenuBtnEl.contains(e.target)) {
             saveCurrentNote();
         }
     });
