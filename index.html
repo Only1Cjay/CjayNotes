@@ -3,24 +3,20 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>CjayNotes — Note Tracker</title>
+    <title>CjayNotes</title>
 
-    <!-- Inline theme loader (prevents flash) -->
     <script>
     (function() {
         try {
-            var palette = localStorage.getItem('cjaynotes_palette') || 'teal';
             var mode = localStorage.getItem('cjaynotes_mode') || 'dark';
-            document.documentElement.setAttribute('data-palette', palette);
             document.documentElement.setAttribute('data-mode', mode);
         } catch (e) {
-            document.documentElement.setAttribute('data-palette', 'teal');
             document.documentElement.setAttribute('data-mode', 'dark');
         }
     })();
     </script>
 
-    <meta name="theme-color" content="#14b8a6">
+    <meta name="theme-color" content="#16181d">
     <meta name="apple-mobile-web-app-capable" content="yes">
     <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
     <meta name="apple-mobile-web-app-title" content="CjayNotes">
@@ -30,19 +26,17 @@
 
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:opsz,wght@14..32,400;14..32,500;14..32,600;14..32,700&family=Plus+Jakarta+Sans:wght@600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 
     <link rel="stylesheet" href="styles.css">
 </head>
 <body>
 
-<!-- ===== OFFLINE BANNER ===== -->
 <div class="offline-banner" id="offlineBanner">No internet connection</div>
 
-<!-- ===== TOASTS ===== -->
 <div class="toast" id="toast"></div>
 <div class="update-toast" id="updateToast">
-    <span>✨ New version available</span>
+    <span>New version available</span>
     <button id="updateRefreshBtn">Refresh</button>
 </div>
 <div class="undo-toast" id="undoToast">
@@ -50,18 +44,20 @@
     <button id="undoBtn">Undo</button>
 </div>
 
-<!-- ===== TOP BAR ===== -->
 <div class="top-bar">
-    <button class="brand" id="brandBtn" aria-label="Home">
-        <svg class="icon-svg brand-icon" viewBox="0 0 24 24" aria-hidden="true">
-            <rect class="brand-icon-bg" x="0" y="0" width="24" height="24" rx="5"/>
-            <rect class="brand-icon-fg" x="6.5" y="6.5" width="11" height="11" rx="1.8"/>
-            <line class="brand-icon-fg" x1="8.5" y1="10" x2="15.5" y2="10"/>
-            <line class="brand-icon-fg" x1="8.5" y1="12.2" x2="15.5" y2="12.2"/>
-            <line class="brand-icon-fg" x1="8.5" y1="14.4" x2="13.5" y2="14.4"/>
-        </svg>
-        <span>Cjay<span>Notes</span></span>
-    </button>
+    <div class="brand-block">
+        <button class="brand" id="brandBtn" aria-label="Home">
+            <svg class="brand-icon" viewBox="0 0 24 24" aria-hidden="true">
+                <rect class="brand-icon-bg" x="0" y="0" width="24" height="24" rx="5.5"/>
+                <rect class="brand-icon-fg" x="6.5" y="6.5" width="11" height="11" rx="1.8"/>
+                <line class="brand-icon-fg" x1="8.5" y1="10" x2="15.5" y2="10"/>
+                <line class="brand-icon-fg" x1="8.5" y1="12.2" x2="15.5" y2="12.2"/>
+                <line class="brand-icon-fg" x1="8.5" y1="14.4" x2="13.5" y2="14.4"/>
+            </svg>
+            <span class="brand-name">Cjay<span>Notes</span></span>
+        </button>
+        <div class="brand-meta" id="brandMeta">0 notes</div>
+    </div>
     <div class="right-group">
         <button class="icon-btn" id="themeBtn" aria-label="Toggle theme"></button>
         <button class="icon-btn" id="menuBtn" aria-label="Menu">
@@ -88,71 +84,39 @@
     </div>
 </div>
 
-<!-- ===== SCREEN: HOME ===== -->
 <div id="screen-home" class="screen active">
     <div class="search-bar hidden" id="searchBar">
-        <input type="text" id="searchInput" placeholder="Search notes, tags, or folders...">
-        <button class="btn btn-sm btn-primary" id="clearSearchBtn">
-            <svg class="icon-svg sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
-        </button>
-    </div>
-
-    <div class="active-filter hidden" id="activeFolderFilter">
-        <span id="activeFolderFilterText">Folder: —</span>
-        <button id="clearFolderFilterBtn" aria-label="Clear folder filter">
+        <input type="text" id="searchInput" placeholder="Search notes, tags, folders...">
+        <button class="icon-btn-sm" id="clearSearchBtn" aria-label="Clear">
             <svg class="icon-svg sm" viewBox="0 0 24 24"><line x1="18" y1="6" x2="6" y2="18"/><line x1="6" y1="6" x2="18" y2="18"/></svg>
         </button>
     </div>
 
     <div class="filter-bar" id="filterBar">
-        <button class="filter-btn active" data-filter="all">
-            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M22 3H2l8 9.46V19l4 2v-8.54L22 3z"/></svg>
-            All <span class="count" id="countAll">0</span>
-        </button>
-        <button class="filter-btn" data-filter="favorites">
-            <svg class="icon-svg" viewBox="0 0 24 24"><polygon points="12 2 15.09 8.26 22 9.27 17 14.14 18.18 21.02 12 17.77 5.82 21.02 7 14.14 2 9.27 8.91 8.26 12 2"/></svg>
-            Favorites <span class="count" id="countFavorites">0</span>
-        </button>
-        <button class="filter-btn" data-filter="archived">
-            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M21 8v13H3V8"/><path d="M1 3h22v5H1z"/><path d="M10 12h4"/></svg>
-            Archived <span class="count" id="countArchived">0</span>
-        </button>
+        <button class="filter-btn active" data-filter="all">All <span class="count" id="countAll">0</span></button>
+        <button class="filter-btn" data-filter="favorites">Starred <span class="count" id="countFavorites">0</span></button>
+        <button class="filter-btn" data-filter="archived">Archived <span class="count" id="countArchived">0</span></button>
     </div>
 
-    <div class="stats-bar">
-        <div class="stat">
-            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M4 4h16v16H4z"/><line x1="8" y1="8" x2="16" y2="8"/><line x1="8" y1="12" x2="12" y2="12"/></svg>
-            <span class="num" id="statNotes">0</span> notes
-        </div>
-        <div class="stat">
-            <svg class="icon-svg" viewBox="0 0 24 24"><circle cx="12" cy="12" r="10"/><path d="M12 6v6l4 2"/></svg>
-            <span class="num" id="statTags">0</span> tags
-        </div>
-        <div class="stat">
-            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M22 19a2 2 0 01-2 2H4a2 2 0 01-2-2V5a2 2 0 012-2h5l2 3h9a2 2 0 012 2z"/></svg>
-            <span class="num" id="statFolders">0</span> folders
-        </div>
-        <div class="stat">
-            <svg class="icon-svg" viewBox="0 0 24 24"><path d="M12 2v4"/><path d="M12 18v4"/><path d="M4.93 4.93l2.83 2.83"/><path d="M16.24 16.24l2.83 2.83"/><path d="M2 12h4"/><path d="M18 12h4"/><path d="M4.93 19.07l2.83-2.83"/><path d="M16.24 7.76l2.83-2.83"/></svg>
-            <span class="num" id="syncStatusText">Not synced</span>
-        </div>
-    </div>
+    <div class="folder-pills hidden" id="folderPillsRow"></div>
 
-    <div id="noteList" class="note-grid"></div>
+    <div id="noteList" class="note-list"></div>
 </div>
 
-<!-- ===== SCREEN: EDITOR ===== -->
 <div id="screen-editor" class="screen">
-    <div class="flex-between mb-8">
-        <button class="btn btn-outline btn-sm" id="backFromEditorBtn">← Back</button>
+    <div class="editor-toolbar">
+        <button class="btn btn-outline btn-sm" id="backFromEditorBtn">
+            <svg class="icon-svg sm" viewBox="0 0 24 24"><line x1="19" y1="12" x2="5" y2="12"/><polyline points="12 19 5 12 12 5"/></svg>
+            Back
+        </button>
         <button class="btn btn-sm btn-neutral" id="saveNoteBtn">
-            <svg class="icon-svg sm" viewBox="0 0 24 24"><path d="M19 21H5a2 2 0 01-2-2V5a2 2 0 012-2h11l5 5v11a2 2 0 01-2 2z"/><polyline points="17 21 17 13 7 13 7 21"/><polyline points="7 3 7 8 15 8"/></svg>
+            <svg class="icon-svg sm" viewBox="0 0 24 24"><polyline points="20 6 9 17 4 12"/></svg>
             Save
         </button>
     </div>
     <div class="editor-container">
-        <input type="text" id="noteTitle" placeholder="Note title...">
-        <textarea id="noteContent" placeholder="Start writing your note..."></textarea>
+        <input type="text" id="noteTitle" placeholder="Title">
+        <textarea id="noteContent" placeholder="Start writing..."></textarea>
         <div class="editor-meta">
             <div class="field">
                 <label>Tags</label>
@@ -160,33 +124,30 @@
             </div>
             <div class="field">
                 <label>Folder</label>
-                <input type="text" id="noteFolder" list="folderOptions" placeholder="Folder name (optional)">
+                <input type="text" id="noteFolder" list="folderOptions" placeholder="Folder name">
                 <datalist id="folderOptions"></datalist>
             </div>
             <div class="field">
-                <label>Last edited</label>
-                <span id="noteLastEdited" style="font-size:12px; color:var(--text-muted); padding:6px 0;">Just now</span>
+                <label>Edited</label>
+                <span id="noteLastEdited" class="editor-date">Just now</span>
             </div>
         </div>
     </div>
 </div>
 
-<!-- ===== SCREEN: FOLDERS ===== -->
 <div id="screen-folders" class="screen">
     <h2 class="screen-title">Folders</h2>
-    <p class="text-muted" style="margin-bottom:12px;">Folders are created automatically when you assign one to a note.</p>
-    <div id="foldersScreenList"></div>
+    <p class="text-muted">Folders are created automatically when you assign one to a note.</p>
+    <div id="foldersScreenList" class="folder-list"></div>
 </div>
 
-<!-- ===== SCREEN: SETTINGS ===== -->
 <div id="screen-settings" class="screen">
     <h2 class="screen-title">Settings</h2>
 
-    <!-- Appearance -->
     <div class="settings-group">
         <div class="group-header" data-group="appearance">
             <h3>Appearance</h3>
-            <span class="toggle-icon">▼</span>
+            <span class="toggle-icon">▾</span>
         </div>
         <div class="group-content">
             <label>Mode</label>
@@ -200,106 +161,80 @@
                     Dark
                 </button>
             </div>
-
-            <label>Palette</label>
-            <div class="palette-picker" id="palettePicker">
-                <button class="palette-swatch" data-palette-value="teal" title="Teal">
-                    <span class="palette-dot" style="background:#14b8a6"></span>
-                    <span class="palette-label">Teal</span>
-                </button>
-                <button class="palette-swatch" data-palette-value="mint" title="Mint">
-                    <span class="palette-dot" style="background:#4ade80"></span>
-                    <span class="palette-label">Mint</span>
-                </button>
-                <button class="palette-swatch" data-palette-value="forest" title="Forest">
-                    <span class="palette-dot" style="background:#22c55e"></span>
-                    <span class="palette-label">Forest</span>
-                </button>
-                <button class="palette-swatch" data-palette-value="deepgreen" title="Deep Green">
-                    <span class="palette-dot" style="background:#34d399"></span>
-                    <span class="palette-label">Deep</span>
-                </button>
-            </div>
         </div>
     </div>
 
-    <!-- Sync & Notifications -->
     <div class="settings-group">
         <div class="group-header" data-group="sync">
             <h3>Sync &amp; Notifications</h3>
-            <span class="toggle-icon">▼</span>
+            <span class="toggle-icon">▾</span>
         </div>
         <div class="group-content">
-            <p class="text-muted" style="margin-bottom:8px;">Sync notes across devices automatically.</p>
+            <p class="text-muted">Sync notes across devices automatically.</p>
             <label>Sync Token</label>
-            <input type="password" id="syncToken" placeholder="Paste your sync token...">
-            <div style="margin-top:10px; display:flex; gap:8px; flex-wrap:wrap;">
+            <input type="password" id="syncToken" placeholder="Paste your sync token">
+            <div class="btn-row-inline">
                 <button class="btn btn-primary btn-sm" id="syncNowBtn">Sync Now</button>
                 <button class="btn btn-neutral btn-sm" id="enablePushBtn">Enable Notifications</button>
             </div>
-            <div id="syncStatusBox" class="sync-info" style="margin-top:10px;">Not connected</div>
+            <div id="syncStatusBox" class="sync-info">Not connected</div>
             <div id="pushStatusBox" class="sync-info">Push: disabled</div>
         </div>
     </div>
 
-    <!-- Google Drive Backup -->
     <div class="settings-group">
         <div class="group-header" data-group="drive">
             <h3>Google Drive Backup</h3>
-            <span class="toggle-icon">▼</span>
+            <span class="toggle-icon">▾</span>
         </div>
         <div class="group-content">
-            <p class="text-muted" style="margin-bottom:8px;">Manual backup to Google Drive.</p>
+            <p class="text-muted">Manual backup to Google Drive.</p>
             <label>Google Client ID</label>
-            <input type="text" id="googleClientId" placeholder="Paste your Google Client ID here...">
-            <div style="margin-top:8px; display:flex; gap:8px; flex-wrap:wrap;">
+            <input type="text" id="googleClientId" placeholder="Paste your client ID">
+            <div class="btn-row-inline">
                 <button class="btn btn-primary btn-sm" id="connectDriveBtn">Connect</button>
-                <button class="btn btn-success btn-sm" id="pushDriveBtn" disabled>Push</button>
+                <button class="btn btn-neutral btn-sm" id="pushDriveBtn" disabled>Push</button>
                 <button class="btn btn-neutral btn-sm" id="pullDriveBtn" disabled>Pull</button>
             </div>
-            <div id="driveStatus" style="margin-top:8px;"></div>
+            <div id="driveStatus"></div>
             <div id="syncInfo" class="sync-info"></div>
         </div>
     </div>
 
-    <!-- Backup & Restore -->
     <div class="settings-group">
         <div class="group-header" data-group="backup">
             <h3>Backup &amp; Restore</h3>
-            <span class="toggle-icon">▼</span>
+            <span class="toggle-icon">▾</span>
         </div>
         <div class="group-content">
-            <p class="text-muted" style="margin-bottom:8px;">Export your notes as a JSON file or import a backup.</p>
-            <div style="display:flex; gap:8px; flex-wrap:wrap;">
-                <button class="btn btn-success btn-sm" id="exportBackupBtn">Export</button>
+            <p class="text-muted">Export your notes as a JSON file or import a backup.</p>
+            <div class="btn-row-inline">
+                <button class="btn btn-neutral btn-sm" id="exportBackupBtn">Export</button>
                 <button class="btn btn-neutral btn-sm" id="importBackupBtn">Import</button>
             </div>
         </div>
     </div>
 
-    <!-- About -->
     <div class="settings-group">
         <div class="group-header" data-group="about">
             <h3>About</h3>
-            <span class="toggle-icon">▼</span>
+            <span class="toggle-icon">▾</span>
         </div>
         <div class="group-content">
             <div class="sync-info">CjayNotes <span id="appVersion">—</span></div>
-            <div class="sync-info" style="margin-top:4px;">Made by Only1Cjay</div>
+            <div class="sync-info">Made by Only1Cjay</div>
         </div>
     </div>
 
     <button class="btn btn-danger btn-block" id="resetAllBtn">Reset All Data</button>
 </div>
 
-<!-- ===== CUSTOM MODAL ===== -->
 <div class="modal-overlay" id="modalOverlay">
     <div class="modal" id="modalContent"></div>
 </div>
 
-<!-- ===== FAB ===== -->
 <button class="fab" id="fabButton" aria-label="New note">
-    <svg class="icon-svg lg" viewBox="0 0 24 24"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="12" y1="5" x2="12" y2="19"/><line x1="5" y1="12" x2="19" y2="12"/></svg>
 </button>
 
 <input type="file" id="backupInput" class="hidden-file-input" accept=".json">
